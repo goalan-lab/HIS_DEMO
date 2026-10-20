@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'add') {
     redirect('patients.php');
 }
 $where = ''; $args = [];
-if ($q !== '') { $where = 'WHERE name LIKE ? OR chart_no LIKE ? OR phone LIKE ?'; $args = ["%$q%", "%$q%", "%$q%"]; }
+if ($q !== '') { $where = 'WHERE name LIKE ? OR chart_no LIKE ? OR phone LIKE ? OR id_no LIKE ?'; $args = ["%$q%", "%$q%", "%$q%", "%$q%"]; }
 $st = $pdo->prepare("SELECT * FROM patients $where ORDER BY id DESC LIMIT 100");
 $st->execute($args);
 $rows = $st->fetchAll();
@@ -26,9 +26,9 @@ $rows = $st->fetchAll();
 <div class="mb-2"><label class="form-label">地址</label><input name="address" class="form-control"></div>
 <button class="btn btn-primary w-100">存檔建病歷號</button></form></div></div></div>
 <div class="col-md-8"><div class="card shadow-sm"><div class="card-header fw-bold d-flex justify-content-between">病歷查詢
-<form class="d-flex" method="get"><input name="q" value="<?= h($q) ?>" class="form-control form-control-sm me-2" placeholder="姓名/病歷號/電話"><button class="btn btn-sm btn-outline-primary">搜尋</button></form></div>
-<div class="table-responsive"><table class="table table-sm table-hover mb-0"><tr><th>病歷號</th><th>姓名</th><th>性別</th><th>生日</th><th>電話</th><th></th></tr>
-<?php foreach ($rows as $r): ?><tr><td><?= h($r['chart_no']) ?></td><td><?= h($r['name']) ?></td><td><?= h($r['gender']) ?></td><td><?= h($r['birth_date']) ?></td><td><?= h($r['phone']) ?></td>
+<form class="d-flex" method="get"><input name="q" value="<?= h($q) ?>" class="form-control form-control-sm me-2" placeholder="姓名/病歷號/電話/身分證"><button class="btn btn-sm btn-outline-primary">搜尋</button></form></div>
+<div class="table-responsive"><table class="table table-sm table-hover mb-0"><tr><th>病歷號</th><th>姓名</th><th>性別</th><th>生日</th><th>身分證</th><th>電話</th><th></th></tr>
+<?php foreach ($rows as $r): ?><tr><td><?= h($r['chart_no']) ?></td><td><?= h($r['name']) ?></td><td><?= h($r['gender']) ?></td><td><?= h($r['birth_date']) ?></td><td><?= h($r['id_no']) ?></td><td><?= h($r['phone']) ?></td>
 <td><a class="btn btn-sm btn-primary" href="register.php?patient_id=<?= $r['id'] ?>">掛號</a></td></tr><?php endforeach; ?></table></div></div></div>
 </div>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
