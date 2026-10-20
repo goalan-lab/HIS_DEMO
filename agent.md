@@ -9,7 +9,7 @@
 ## 2. 技術棧與環境
 - 後端：原生 PHP 8.2（D:\xampp\php\php.exe），無框架、無 composer，無路由，直接對應 .php 檔。
 - 前端：Bootstrap 5.3.3 CDN + 內聯 PHP 模板（includes/header.php / footer.php）。
-- 資料庫：MariaDB 10.4（D:\xampp\mysql\bin\mysql.exe），DB 名 his_demo，帳號 root / 空密碼，host 127.0.0.1:3306，utf8mb4。
+- 資料庫：MariaDB 10.4（D:\xampp\mysql\bin\mysql.exe），DB 名 alan，帳號 root / 空密碼，host 127.0.0.1:3306，utf8mb4。
 - 部署：XAMPP，Apache + MySQL 需手動在 xampp-control.exe 啟動；網址 http://localhost/HIS_DEMO/。
 - 工具：Git 2.56（Windows），PowerShell 執行指令。
 - 注意：git -C <path> 在此機會掉工作目錄，一律先 Set-Location d:/xampp/htdocs/HIS_DEMO 再下 git 指令。

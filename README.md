@@ -17,7 +17,7 @@
 3. 用 `admin / his1234` 登入 `http://localhost/HIS_DEMO/login.php`
 
 ## 資料庫
-- DB: `his_demo`
+- DB: `alan`
 - 表: users / patients / doctors / registrations / bills / drugs / prescriptions
 - Schema: `database/schema.sql`
 
