@@ -3,10 +3,15 @@ require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 if (isset($_GET['dispense'])) {
     $reg_id = (int)$_GET['dispense'];
-    // 扣庫存
+    // 扣庫存＋寫流水
     $rxs = $pdo->query("SELECT * FROM prescriptions WHERE reg_id=$reg_id AND dispensed=0")->fetchAll();
     foreach ($rxs as $x) {
-        $pdo->prepare('UPDATE drugs SET stock=GREATEST(0,stock-?) WHERE id=?')->execute([$x['qty'], $x['drug_id']]);
+        $d = $pdo->query("SELECT stock FROM drugs WHERE id={$x['drug_id']}")->fetch();
+        $before = (int)$d['stock'];
+        $after = max(0, $before - $x['qty']);
+        $pdo->prepare('UPDATE drugs SET stock=? WHERE id=?')->execute([$after, $x['drug_id']]);
+        $pdo->prepare("INSERT INTO stock_txns(drug_id,txn_type,qty,before_stock,after_stock,ref_type,ref_id,created_by) VALUES(?,'發藥',?,?,?,?,?,?)")
+            ->execute([$x['drug_id'], -$x['qty'], $before, $after, 'registrations', $reg_id, $_SESSION['user']['username'] ?? '']);
         $pdo->prepare('UPDATE prescriptions SET dispensed=1 WHERE id=?')->execute([$x['id']]);
     }
     $pdo->prepare("UPDATE registrations SET status='結案' WHERE id=?")->execute([$reg_id]);

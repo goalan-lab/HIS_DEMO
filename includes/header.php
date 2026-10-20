@@ -35,6 +35,8 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
         <li class="nav-item"><a class="nav-link <?= nav_active('receipt.php') ?>" href="billing.php">收據</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('refund.php') ?>" href="refund.php">退掛退費</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('pharmacy.php') ?>" href="pharmacy.php">藥局發藥</a></li>
+        <li class="nav-item"><a class="nav-link <?= nav_active('inventory.php') ?>" href="inventory.php">藥品庫存</a></li>
+        <li class="nav-item"><a class="nav-link <?= nav_active('ipd.php') ?>" href="ipd.php">住院</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('reports.php') ?>" href="reports.php">報表</a></li>
       </ul>
       <span class="navbar-text text-white me-3">👤 <?= h($user['username'] ?? '') ?> (<?= h($user['role'] ?? '') ?>)</span>

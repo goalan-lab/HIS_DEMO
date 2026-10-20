@@ -41,10 +41,12 @@
 - registrations(id, reg_no UNIQUE R+ymd+3碼, patient_id FK, visit_date, slot 早/午/晚診, dept, doctor_id FK, status 掛號/看診中/待批價/待領藥/結案/退掛, reg_fee 150, exam_fee 350)
 - bills(id, bill_no UNIQUE B+ymd+3碼, reg_id UNIQUE FK, med_fee, total, paid, paid_at, cashier, voided 作廢, void_at)
 - refunds(id, reg_id FK, bill_id FK, amount, reason, restock 是否回補, created_by)
-- drugs(id, code UNIQUE, name, spec, unit, price, stock)：demo D001~D005
+- drugs(id, code UNIQUE, name, spec, unit, price, stock, safety_stock, expiry)：demo D001~D005
 - prescriptions(id, reg_id FK, drug_id FK, qty, usage_note, dispensed)
 - schedules(id, doctor_id FK, weekday 0-6, slot, room, quota 限額, active)：週一~六早午晚預設54筆
 - registrations 加 queue_no 診間號、called_at 叫號時間；看診中狀態正式啟用（叫號用）
+- 住院：wards(病房/病床費)/beds(空床佔床清潔中)/admissions(住院號A+ymd)/ipd_orders(藥品檢查處置護理)/nursing_notes(生命徵象)
+- 進銷存：stock_txns(進貨發藥退藥盤點報廢流水)/stocktakes+items(盤點單)；發藥/退藥/盤點統一走 stock_apply 寫流水
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 

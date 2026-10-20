@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS drugs (
   unit VARCHAR(20) NOT NULL DEFAULT '顆',
   price INT NOT NULL DEFAULT 0 COMMENT '單價(元)',
   stock INT NOT NULL DEFAULT 100,
+  safety_stock INT NOT NULL DEFAULT 50,
+  expiry DATE NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -96,6 +98,41 @@ CREATE TABLE IF NOT EXISTS prescriptions (
   FOREIGN KEY (drug_id) REFERENCES drugs(id)
 );
 
+CREATE TABLE IF NOT EXISTS stock_txns (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  drug_id INT NOT NULL,
+  txn_type ENUM('進貨','發藥','退藥回庫','盤點調整','報廢') NOT NULL,
+  qty INT NOT NULL COMMENT '正=入庫 負=出庫',
+  before_stock INT NOT NULL DEFAULT 0,
+  after_stock INT NOT NULL DEFAULT 0,
+  ref_type VARCHAR(30) NULL,
+  ref_id INT NULL,
+  note VARCHAR(200) NULL,
+  created_by VARCHAR(50) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (drug_id) REFERENCES drugs(id)
+);
+
+CREATE TABLE IF NOT EXISTS stocktakes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  st_no VARCHAR(20) NOT NULL UNIQUE,
+  status ENUM('盤點中','已入帳') NOT NULL DEFAULT '盤點中',
+  created_by VARCHAR(50) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stocktake_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  stocktake_id INT NOT NULL,
+  drug_id INT NOT NULL,
+  sys_qty INT NOT NULL DEFAULT 0,
+  counted_qty INT NULL,
+  diff INT NULL,
+  FOREIGN KEY (stocktake_id) REFERENCES stocktakes(id),
+  FOREIGN KEY (drug_id) REFERENCES drugs(id),
+  UNIQUE KEY uq_st_item (stocktake_id, drug_id)
+);
+
 CREATE TABLE IF NOT EXISTS refunds (
   id INT AUTO_INCREMENT PRIMARY KEY,
   reg_id INT NOT NULL,
@@ -107,6 +144,61 @@ CREATE TABLE IF NOT EXISTS refunds (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (reg_id) REFERENCES registrations(id),
   FOREIGN KEY (bill_id) REFERENCES bills(id)
+);
+
+CREATE TABLE IF NOT EXISTS wards (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE COMMENT '病房/護理站',
+  bed_fee INT NOT NULL DEFAULT 1500 COMMENT '每日病床費'
+);
+
+CREATE TABLE IF NOT EXISTS beds (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ward_id INT NOT NULL,
+  bed_no VARCHAR(20) NOT NULL,
+  status ENUM('空床','佔床','清潔中') NOT NULL DEFAULT '空床',
+  UNIQUE KEY uq_bed (ward_id, bed_no),
+  FOREIGN KEY (ward_id) REFERENCES wards(id)
+);
+
+CREATE TABLE IF NOT EXISTS admissions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  adm_no VARCHAR(20) NOT NULL UNIQUE COMMENT '住院號',
+  patient_id INT NOT NULL,
+  bed_id INT NULL,
+  doctor_id INT NULL,
+  admit_date DATE NOT NULL,
+  discharge_date DATE NULL,
+  status ENUM('住院中','已出院') NOT NULL DEFAULT '住院中',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id),
+  FOREIGN KEY (bed_id) REFERENCES beds(id),
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+);
+
+CREATE TABLE IF NOT EXISTS ipd_orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admission_id INT NOT NULL,
+  order_type ENUM('藥品','檢查','處置','護理') NOT NULL DEFAULT '藥品',
+  drug_id INT NULL,
+  item_name VARCHAR(100) NOT NULL,
+  qty INT NOT NULL DEFAULT 1,
+  price INT NOT NULL DEFAULT 0,
+  note VARCHAR(200) NULL,
+  status ENUM('開立','執行中','完成','取消') NOT NULL DEFAULT '開立',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admission_id) REFERENCES admissions(id),
+  FOREIGN KEY (drug_id) REFERENCES drugs(id)
+);
+
+CREATE TABLE IF NOT EXISTS nursing_notes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admission_id INT NOT NULL,
+  note_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  vitals VARCHAR(200) NULL COMMENT '體溫/血壓/脈搏等',
+  content TEXT NULL,
+  nurse VARCHAR(50) NULL,
+  FOREIGN KEY (admission_id) REFERENCES admissions(id)
 );
 
 -- 預設帳號 admin / his1234
