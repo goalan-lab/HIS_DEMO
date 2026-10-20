@@ -17,7 +17,11 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= h(APP_NAME) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>body{background:#f4f6fb} .card{border-radius:14px} .nav-link.active{font-weight:700}</style>
+<style>body{background:#f4f6fb} .card{border-radius:14px} .nav-link.active{font-weight:700}
+/* 導覽列按鈕過多時自動換行 */
+#nav .navbar-nav{flex-wrap:wrap;row-gap:2px}
+#nav .nav-link{white-space:nowrap;padding-left:.6rem;padding-right:.6rem}
+#nav .navbar-text{white-space:nowrap}</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
