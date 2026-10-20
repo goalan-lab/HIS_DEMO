@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'add') {
         if ((int)$chk->fetch()['c'] > 0) { flash_set('該刀房此時段已被預約'); redirect('surgery.php'); }
     }
     $no = gen_no($pdo, 'O', 'surgeries', 'op_no');
-    $pdo->prepare('INSERT INTO surgeries(op_no,admission_id,patient_id,doctor_id,op_room_id,op_name,op_date,start_time,end_time,anesthesia,fee,note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
-        ->execute([$no, $_POST['admission_id'] ?: null, (int)$_POST['patient_id'], (int)$_POST['doctor_id'], $room ?: null, trim($_POST['op_name']), $date, $st, $et, $_POST['anesthesia'], (int)$_POST['fee'], trim($_POST['note'] ?? '')]);
+    $pdo->prepare('INSERT INTO surgeries(op_no,admission_id,reg_id,patient_id,doctor_id,op_room_id,op_name,op_date,start_time,end_time,anesthesia,fee,note) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        ->execute([$no, $_POST['admission_id'] ?: null, $_POST['reg_id'] ?: null, (int)$_POST['patient_id'], (int)$_POST['doctor_id'], $room ?: null, trim($_POST['op_name']), $date, $st, $et, $_POST['anesthesia'], (int)$_POST['fee'], trim($_POST['note'] ?? '')]);
     flash_set('手術已排程：' . $no);
     redirect('surgery.php');
 }
@@ -31,12 +31,15 @@ $allp = $pdo->query('SELECT id,chart_no,name FROM patients ORDER BY id DESC LIMI
 $docs = $pdo->query('SELECT * FROM doctors ORDER BY id')->fetchAll();
 $rooms = $pdo->query('SELECT * FROM op_rooms WHERE active=1 ORDER BY id')->fetchAll();
 $adms = $pdo->query("SELECT a.id, a.adm_no, p.name FROM admissions a JOIN patients p ON p.id=a.patient_id WHERE a.status='住院中' ORDER BY a.id DESC LIMIT 50")->fetchAll();
+$regs = $pdo->query("SELECT r.id, r.reg_no, p.name FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status!='退掛' ORDER BY r.id DESC LIMIT 50")->fetchAll();
 ?>
 <div class="row g-3">
 <div class="col-md-4"><div class="card shadow-sm"><div class="card-header fw-bold">新增手術排程</div><div class="card-body">
 <form method="post"><input type="hidden" name="act" value="add">
 <div class="mb-2"><label class="form-label">病人*</label><select name="patient_id" class="form-select"><?php foreach ($allp as $p): ?><option value="<?= $p['id'] ?>"><?= h($p['chart_no'].' '.$p['name']) ?></option><?php endforeach; ?></select></div>
 <div class="mb-2"><label class="form-label">住院單（可不選）</label><select name="admission_id" class="form-select"><option value="">-- 無 --</option><?php foreach ($adms as $a): ?><option value="<?= $a['id'] ?>"><?= h($a['adm_no'].' '.$a['name']) ?></option><?php endforeach; ?></select></div>
+<div class="mb-2"><label class="form-label">掛號單（門診手術，可不選）</label><select name="reg_id" class="form-select"><option value="">-- 無 --</option><?php foreach ($regs as $g): ?><option value="<?= $g['id'] ?>"><?= h($g['reg_no'].' '.$g['name']) ?></option><?php endforeach; ?></select>
+<div class="form-text">選掛號單：手術費併入該掛號批價收據；選住院單：併入出院結算；皆可選時住院優先。</div></div>
 <div class="mb-2"><label class="form-label">術式*</label><input name="op_name" class="form-control" placeholder="闌尾切除術" required></div>
 <div class="row g-2"><div class="col"><label class="form-label">主刀</label><select name="doctor_id" class="form-select"><?php foreach ($docs as $d): ?><option value="<?= $d['id'] ?>"><?= h($d['name']) ?></option><?php endforeach; ?></select></div>
 <div class="col"><label class="form-label">刀房</label><select name="op_room_id" class="form-select"><?php foreach ($rooms as $r): ?><option value="<?= $r['id'] ?>"><?= h($r['name']) ?></option><?php endforeach; ?></select></div></div>

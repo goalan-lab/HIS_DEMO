@@ -51,6 +51,7 @@
 - 健保對帳：registrations 加 ins_type/copay/nhi_claim；nhi.php 月統計＋CSV（院內對帳，不含健保XML格式）
 - 手術排程：op_rooms(刀房A/B/C)＋surgeries(O+ymd 手術號，admission_id 可空掛住院、刀房時間重疊擋預約)；狀態流 排程→術前準備→手術中→恢復中→完成/取消（surgery.php 按鍵推進，跳轉保留日期）
 - 出院結算：ipd.php 住院單顯示 病床費＋醫囑費＋手術費（該住院掛之非取消 surgeries.fee 合計）＝出院總計；併入明細表
+- 門診手術併批價：surgeries 加 reg_id（FK registrations）；surgery.php 可掛掛號單。批價 billing.php 及收據 receipt.php 計入 該 reg 非取消且 admission_id IS NULL 之手術費（住院掛單者併出院結算，避免重複計）；報表 reports.php 加「手術營收」日別統計（未取消）＋完成累計
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 

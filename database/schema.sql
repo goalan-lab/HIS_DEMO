@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS surgeries (
   id INT AUTO_INCREMENT PRIMARY KEY,
   op_no VARCHAR(20) NOT NULL UNIQUE COMMENT '手術號',
   admission_id INT NULL COMMENT '可掛住院或直接排門診病人',
+  reg_id INT NULL COMMENT '門診掛號(手術費併批價)',
   patient_id INT NOT NULL,
   doctor_id INT NULL COMMENT '主刀',
   op_room_id INT NULL,
@@ -227,6 +228,7 @@ CREATE TABLE IF NOT EXISTS surgeries (
   note VARCHAR(200) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (admission_id) REFERENCES admissions(id),
+  FOREIGN KEY (reg_id) REFERENCES registrations(id),
   FOREIGN KEY (patient_id) REFERENCES patients(id),
   FOREIGN KEY (doctor_id) REFERENCES doctors(id),
   FOREIGN KEY (op_room_id) REFERENCES op_rooms(id)

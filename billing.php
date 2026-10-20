@@ -7,7 +7,9 @@ if (isset($_GET['pay'])) {
     if (!$r || $r['status'] === '退掛') { flash_set('該掛號已退掛，不可收費'); redirect('billing.php'); }
     $med = (int)$pdo->query("SELECT IFNULL(SUM(d.price*pr.qty),0) s FROM prescriptions pr JOIN drugs d ON d.id=pr.drug_id WHERE pr.reg_id=$reg_id")->fetch()['s'];
     $lab = (int)$pdo->query("SELECT IFNULL(SUM(price*qty),0) s FROM exam_orders WHERE reg_id=$reg_id AND status!='取消'")->fetch()['s'];
-    $total = $r['reg_fee'] + $r['exam_fee'] + $med + $lab;
+    // 門診手術費：掛該掛號、無住院掛單、未取消（有住院者併出院結算，避免重複計）
+    $op = (int)$pdo->query("SELECT IFNULL(SUM(fee),0) s FROM surgeries WHERE reg_id=$reg_id AND admission_id IS NULL AND status!='取消'")->fetch()['s'];
+    $total = $r['reg_fee'] + $r['exam_fee'] + $med + $lab + $op;
     $bill_no = gen_no($pdo, 'B', 'bills', 'bill_no');
     $pdo->prepare('INSERT INTO bills(bill_no,reg_id,med_fee,total,paid,paid_at,cashier,voided) VALUES(?,?,?,?,1,NOW(),?,0) ON DUPLICATE KEY UPDATE med_fee=VALUES(med_fee),total=VALUES(total),paid=1,paid_at=NOW(),voided=0')
         ->execute([$bill_no, $reg_id, $med, $total, $_SESSION['user']['username'] ?? 'cashier']);
@@ -31,15 +33,15 @@ if (isset($_GET['refund'])) {
     flash_set('已退費 ' . number_format($b['total']) . ' 元，掛號已退掛');
     redirect('refund.php');
 }
-$rows = $pdo->query("SELECT r.*, p.name pname, p.chart_no, (SELECT IFNULL(SUM(d.price*pr.qty),0) FROM prescriptions pr JOIN drugs d ON d.id=pr.drug_id WHERE pr.reg_id=r.id) med, (SELECT IFNULL(SUM(price*qty),0) FROM exam_orders e WHERE e.reg_id=r.id AND e.status!='取消') lab FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status='待批價' ORDER BY r.id")->fetchAll();
+$rows = $pdo->query("SELECT r.*, p.name pname, p.chart_no, (SELECT IFNULL(SUM(d.price*pr.qty),0) FROM prescriptions pr JOIN drugs d ON d.id=pr.drug_id WHERE pr.reg_id=r.id) med, (SELECT IFNULL(SUM(price*qty),0) FROM exam_orders e WHERE e.reg_id=r.id AND e.status!='取消') lab, (SELECT IFNULL(SUM(fee),0) FROM surgeries s WHERE s.reg_id=r.id AND s.admission_id IS NULL AND s.status!='取消') op FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status='待批價' ORDER BY r.id")->fetchAll();
 $done = $pdo->query("SELECT b.*, r.reg_no, r.status rstatus, p.name pname FROM bills b JOIN registrations r ON r.id=b.reg_id JOIN patients p ON p.id=r.patient_id WHERE b.paid=1 ORDER BY b.id DESC LIMIT 20")->fetchAll();
 ?>
 <div class="card shadow-sm"><div class="card-header fw-bold">批價收費 — 待批價清單</div>
 <div class="table-responsive"><table class="table table-hover mb-0">
-<tr><th>掛號單</th><th>病人</th><th>掛號費</th><th>診察費</th><th>藥費</th><th>檢驗檢查</th><th>合計</th><th></th></tr>
-<?php foreach ($rows as $r): $t = $r['reg_fee']+$r['exam_fee']+$r['med']+$r['lab']; ?>
+<tr><th>掛號單</th><th>病人</th><th>掛號費</th><th>診察費</th><th>藥費</th><th>檢驗檢查</th><th>手術費</th><th>合計</th><th></th></tr>
+<?php foreach ($rows as $r): $t = $r['reg_fee']+$r['exam_fee']+$r['med']+$r['lab']+$r['op']; ?>
 <tr><td><?= h($r['reg_no']) ?></td><td><?= h($r['chart_no'].' '.$r['pname']) ?></td>
-<td><?= number_format($r['reg_fee']) ?></td><td><?= number_format($r['exam_fee']) ?></td><td><?= number_format($r['med']) ?></td><td><?= number_format($r['lab']) ?></td>
+<td><?= number_format($r['reg_fee']) ?></td><td><?= number_format($r['exam_fee']) ?></td><td><?= number_format($r['med']) ?></td><td><?= number_format($r['lab']) ?></td><td><?= number_format($r['op']) ?></td>
 <td><b><?= number_format($t) ?></b></td>
 <td><a class="btn btn-sm btn-success" href="billing.php?pay=<?= $r['id'] ?>" onclick="return confirm('確認收取 <?= number_format($t) ?> 元？')">收費列印</a></td></tr>
 <?php endforeach; ?></table></div>
