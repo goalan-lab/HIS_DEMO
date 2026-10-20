@@ -201,6 +201,41 @@ CREATE TABLE IF NOT EXISTS nursing_notes (
   FOREIGN KEY (admission_id) REFERENCES admissions(id)
 );
 
+CREATE TABLE IF NOT EXISTS exam_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(30) NOT NULL UNIQUE,
+  category ENUM('檢驗','檢查') NOT NULL DEFAULT '檢驗',
+  name VARCHAR(100) NOT NULL,
+  price INT NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS exam_orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_no VARCHAR(20) NOT NULL UNIQUE,
+  reg_id INT NULL,
+  admission_id INT NULL,
+  item_id INT NOT NULL,
+  qty INT NOT NULL DEFAULT 1,
+  price INT NOT NULL DEFAULT 0,
+  status ENUM('開立','檢體採集','檢驗中','已發報告','取消') NOT NULL DEFAULT '開立',
+  ordered_by VARCHAR(50) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (reg_id) REFERENCES registrations(id),
+  FOREIGN KEY (admission_id) REFERENCES admissions(id),
+  FOREIGN KEY (item_id) REFERENCES exam_items(id)
+);
+
+CREATE TABLE IF NOT EXISTS exam_results (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL UNIQUE,
+  result_text TEXT NULL,
+  abnormal TINYINT(1) NOT NULL DEFAULT 0,
+  reported_by VARCHAR(50) NULL,
+  reported_at DATETIME NULL,
+  FOREIGN KEY (order_id) REFERENCES exam_orders(id)
+);
+
 -- 預設帳號 admin / his1234
 INSERT IGNORE INTO users (username, password_hash, role) VALUES
 ('admin', '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '管理');

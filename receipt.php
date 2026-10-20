@@ -14,6 +14,8 @@ $st = $pdo->prepare('SELECT b.* FROM bills b WHERE b.reg_id=? ORDER BY b.id DESC
 $st->execute([$reg_id]); $b = $st->fetch();
 $st = $pdo->prepare('SELECT pr.qty, pr.usage_note, g.name gname, g.price FROM prescriptions pr JOIN drugs g ON g.id=pr.drug_id WHERE pr.reg_id=? ORDER BY pr.id');
 $st->execute([$reg_id]); $rxs = $st->fetchAll();
+$st = $pdo->prepare('SELECT e.qty, e.price, i.name FROM exam_orders e JOIN exam_items i ON i.id=e.item_id WHERE e.reg_id=? AND e.status!=? ORDER BY e.id');
+$st->execute([$reg_id, '取消']); $labs = $st->fetchAll();
 $voided = $b && (int)$b['voided'] === 1;
 ?>
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>收據 <?= h($r['reg_no']) ?></title>
@@ -31,6 +33,7 @@ $voided = $b && (int)$b['voided'] === 1;
 <tr><td>掛號費</td><td class="text-end"><?= number_format($r['reg_fee']) ?></td></tr>
 <tr><td>診察費</td><td class="text-end"><?= number_format($r['exam_fee']) ?></td></tr>
 <?php foreach ($rxs as $x): ?><tr><td><?= h($x['gname'] . ' x' . $x['qty']) ?></td><td class="text-end"><?= number_format($x['price']*$x['qty']) ?></td></tr><?php endforeach; ?>
+<?php foreach ($labs as $x): ?><tr><td><?= h('[檢驗] ' . $x['name'] . ' x' . $x['qty']) ?></td><td class="text-end"><?= number_format($x['price']*$x['qty']) ?></td></tr><?php endforeach; ?>
 <tr><th>合計</th><th class="text-end"><?= number_format((int)($b['total'] ?? ($r['reg_fee']+$r['exam_fee']))) ?></th></tr></table>
 <p>收銀：<?= h($b['cashier'] ?? '-') ?>　收費時間：<?= h($b['paid_at'] ?? '-') ?></p>
 <div class="text-center text-muted small">謝謝蒞臨，祝早日康復</div>

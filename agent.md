@@ -47,6 +47,7 @@
 - registrations 加 queue_no 診間號、called_at 叫號時間；看診中狀態正式啟用（叫號用）
 - 住院：wards(病房/病床費)/beds(空床佔床清潔中)/admissions(住院號A+ymd)/ipd_orders(藥品檢查處置護理)/nursing_notes(生命徵象)
 - 進銷存：stock_txns(進貨發藥退藥盤點報廢流水)/stocktakes+items(盤點單)；發藥/退藥/盤點統一走 stock_apply 寫流水
+- 檢驗檢查：exam_items(9項預設)/exam_orders(L+ymd，reg或住院二選一)/exam_results(異常紅字)；門診批價＋收據已含檢驗費
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 
