@@ -1,0 +1,11 @@
+# XAMPP / PHP
+.DS_Store
+Thumbs.db
+
+# sensitive / local
+config/local.php
+*.log
+
+# temp / test
+_tmp/
+_ping_db.php
