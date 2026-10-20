@@ -26,8 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'reg') {
         $mx = $pdo->query("SELECT MAX(queue_no) m FROM registrations WHERE doctor_id=$vdid AND visit_date=" . $pdo->quote($vdate) . " AND slot=" . $pdo->quote($vslot))->fetch()['m'];
         $qno = ((int)$mx) + 1;
     }
-    $st = $pdo->prepare('INSERT INTO registrations(reg_no,patient_id,visit_date,slot,dept,doctor_id,queue_no,status,reg_fee,exam_fee) VALUES(?,?,?,?,?,?,?,?, ?,?)');
-    $st->execute([$reg_no, $pid, $vdate, $vslot, $_POST['dept'], $vdid, $qno, '掛號', DEFAULT_REG_FEE, DEFAULT_EXAM_FEE]);
+    $st = $pdo->prepare('INSERT INTO registrations(reg_no,patient_id,visit_date,slot,dept,doctor_id,queue_no,status,reg_fee,exam_fee,ins_type,copay,nhi_claim) VALUES(?,?,?,?,?,?,?,?, ?,?,?,?,?)');
+    $ins = $_POST['ins_type'] ?? '健保';
+    $copay = $ins === '健保' ? 150 : 0;
+    if ($ins === '自費') { $copay = 0; }
+    $st->execute([$reg_no, $pid, $vdate, $vslot, $_POST['dept'], $vdid, $qno, '掛號', DEFAULT_REG_FEE, DEFAULT_EXAM_FEE, $ins, $copay, $ins === '自費' ? 0 : 1]);
     $reg_id = (int)$pdo->lastInsertId();
     flash_set('掛號成功：' . $reg_no . '（' . $vslot . '第 ' . $qno . ' 號）');
     redirect('register.php?reg_id=' . $reg_id);
@@ -71,6 +74,8 @@ $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patient
 <div class="col"><label class="form-label">診別</label><select name="slot" class="form-select"><?php foreach (slot_options() as $k=>$v): ?><option value="<?= $k ?>"><?= $v ?></option><?php endforeach; ?></select></div></div>
 <div class="row g-2 mt-1"><div class="col"><label class="form-label">科別</label><input name="dept" class="form-control" value="家醫科"></div>
 <div class="col"><label class="form-label">醫師</label><select name="doctor_id" class="form-select"><?php foreach ($doctors as $d): ?><option value="<?= $d['id'] ?>"><?= h($d['dept'].' '.$d['name']) ?></option><?php endforeach; ?></select></div></div>
+<div class="mt-2"><label class="form-label">身分別</label><select name="ins_type" class="form-select"><option>健保</option><option>自費</option><option>重大傷病</option><option>榮民</option><option>低收</option></select>
+<div class="form-text">健保部分負擔預設 150；自費不申報。</div></div>
 <button class="btn btn-primary w-100 mt-3">確認掛號</button></form></div></div></div>
 <div class="col-md-7"><div class="card shadow-sm"><div class="card-header fw-bold">開處方 <?= $reg ? '— '.h($reg['reg_no'].' '.$reg['pname']) : '' ?></div><div class="card-body">
 <?php if ($reg): ?>

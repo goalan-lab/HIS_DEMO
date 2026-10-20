@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS registrations (
   status ENUM('掛號','看診中','待批價','待領藥','結案','退掛') NOT NULL DEFAULT '掛號',
   reg_fee INT NOT NULL DEFAULT 150,
   exam_fee INT NOT NULL DEFAULT 350,
+  ins_type ENUM('健保','自費','重大傷病','榮民','低收') NOT NULL DEFAULT '健保',
+  copay INT NOT NULL DEFAULT 0 COMMENT '部分負擔',
+  nhi_claim TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否申報健保',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patient_id) REFERENCES patients(id),
   FOREIGN KEY (doctor_id) REFERENCES doctors(id)

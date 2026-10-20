@@ -54,6 +54,7 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
         <li class="nav-item"><a class="nav-link <?= nav_active('inventory.php') ?>" href="inventory.php">藥品庫存</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('ipd.php') ?>" href="ipd.php">住院</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('lab.php') ?>" href="lab.php">檢驗檢查</a></li>
+        <li class="nav-item"><a class="nav-link <?= nav_active('nhi.php') ?>" href="nhi.php">健保對帳</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('reports.php') ?>" href="reports.php">報表</a></li>
       </ul>
       <div class="nav-user">
