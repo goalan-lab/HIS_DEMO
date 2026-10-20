@@ -39,7 +39,8 @@
 - patients(id, chart_no UNIQUE, name, id_no, birth_date, gender, phone, address)
 - doctors(id, name, dept, room)：王大明/家醫科/101，李小華/內科/102，陳美玲/小兒科/103
 - registrations(id, reg_no UNIQUE R+ymd+3碼, patient_id FK, visit_date, slot 早/午/晚診, dept, doctor_id FK, status 掛號/看診中/待批價/待領藥/結案/退掛, reg_fee 150, exam_fee 350)
-- bills(id, bill_no UNIQUE B+ymd+3碼, reg_id UNIQUE FK, med_fee, total, paid, paid_at, cashier)
+- bills(id, bill_no UNIQUE B+ymd+3碼, reg_id UNIQUE FK, med_fee, total, paid, paid_at, cashier, voided 作廢, void_at)
+- refunds(id, reg_id FK, bill_id FK, amount, reason, restock 是否回補, created_by)
 - drugs(id, code UNIQUE, name, spec, unit, price, stock)：demo D001~D005
 - prescriptions(id, reg_id FK, drug_id FK, qty, usage_note, dispensed)
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。

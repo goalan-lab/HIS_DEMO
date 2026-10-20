@@ -5,9 +5,10 @@
 ## 功能
 - 病歷管理 (`patients.php`)
 - 門診掛號 + 看診開處方 (`register.php`)
-- 批價收費 (`billing.php`)
+- 批價收費 + 收據列印 (`billing.php`、`receipt.php?reg_id=`)
+- 退掛退費 (`refund.php`：未收費直接退掛，已收費作廢帳單＋可回補庫存)
 - 藥局發藥 + 庫存 (`pharmacy.php`)
-- 營運報表 (`reports.php`)
+- 營運報表 (`reports.php`：營收已扣退費作廢＋每日退費)
 
 流程：掛號 → 待批價 → 待領藥 → 結案
 

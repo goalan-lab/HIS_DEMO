@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS bills (
   paid TINYINT(1) NOT NULL DEFAULT 0,
   paid_at DATETIME NULL,
   cashier VARCHAR(50) NULL,
+  voided TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否作廢(退費)',
+  void_at DATETIME NULL,
   FOREIGN KEY (reg_id) REFERENCES registrations(id)
 );
 
@@ -78,6 +80,19 @@ CREATE TABLE IF NOT EXISTS prescriptions (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (reg_id) REFERENCES registrations(id),
   FOREIGN KEY (drug_id) REFERENCES drugs(id)
+);
+
+CREATE TABLE IF NOT EXISTS refunds (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  reg_id INT NOT NULL,
+  bill_id INT NULL,
+  amount INT NOT NULL DEFAULT 0,
+  reason VARCHAR(200) NULL,
+  restock TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否回補庫存',
+  created_by VARCHAR(50) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (reg_id) REFERENCES registrations(id),
+  FOREIGN KEY (bill_id) REFERENCES bills(id)
 );
 
 -- 預設帳號 admin / his1234
