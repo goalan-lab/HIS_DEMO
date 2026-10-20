@@ -6,7 +6,7 @@
 - 病歷管理 (`patients.php`)
 - 門診掛號 + 看診開處方 (`register.php`：接班表檢查＋自動診間號)
 - 批價收費 + 收據列印 (`billing.php`、`receipt.php?reg_id=`)
-- 退掛退費 (`refund.php`：未收費直接退掛，已收費作廢帳單＋可回補庫存)
+- 退掛退費 (`refund.php`：未收費直接退掛，已收費作廢帳單＋可回補庫存；退掛退費同步作廢該掛號門診手術)
 - 藥局發藥 + 庫存 (`pharmacy.php`，發藥寫進銷存流水)
 - 藥品進銷存/盤點 (`inventory.php`：建檔/進貨/報廢/盤點單/流水)
 - 住院 (`ipd.php`：入院/病床/出院結算；`orders.php` 醫囑；`nursing.php` 護理紀錄)

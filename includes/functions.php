@@ -19,6 +19,13 @@ function gen_no(PDO $pdo, string $prefix, string $table, string $col): string {
 function flash_set($msg) { $_SESSION['flash'] = $msg; }
 function flash_get() { $m = $_SESSION['flash'] ?? ''; unset($_SESSION['flash']); return $m; }
 
+// 退掛/退費時同步作廢該掛號之門診手術（掛 reg 且無住院掛單、非取消者；住院手術併出院結算不在此列）
+function void_outpatient_surgeries(PDO $pdo, int $reg_id): int {
+    $st = $pdo->prepare("UPDATE surgeries SET status='取消' WHERE reg_id=? AND admission_id IS NULL AND status!='取消'");
+    $st->execute([$reg_id]);
+    return (int)$st->rowCount();
+}
+
 function require_login() {
     if (session_status() === PHP_SESSION_NONE) session_start();
     $public = ['login.php', 'install.php'];

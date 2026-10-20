@@ -29,8 +29,9 @@ if (isset($_GET['refund'])) {
     $pdo->prepare('INSERT INTO refunds(reg_id,bill_id,amount,reason,restock,created_by) VALUES(?,?,?,?,0,?)')
         ->execute([$reg_id, $b['id'], $b['total'], '批價直接退費', $_SESSION['user']['username'] ?? '']);
     $pdo->prepare("UPDATE registrations SET status='退掛' WHERE id=?")->execute([$reg_id]);
+    $n_op = void_outpatient_surgeries($pdo, $reg_id);
     $pdo->commit();
-    flash_set('已退費 ' . number_format($b['total']) . ' 元，掛號已退掛');
+    flash_set('已退費 ' . number_format($b['total']) . ' 元，掛號已退掛' . ($n_op ? "（同步作廢門診手術 $n_op 台）" : ''));
     redirect('refund.php');
 }
 $rows = $pdo->query("SELECT r.*, p.name pname, p.chart_no, (SELECT IFNULL(SUM(d.price*pr.qty),0) FROM prescriptions pr JOIN drugs d ON d.id=pr.drug_id WHERE pr.reg_id=r.id) med, (SELECT IFNULL(SUM(price*qty),0) FROM exam_orders e WHERE e.reg_id=r.id AND e.status!='取消') lab, (SELECT IFNULL(SUM(fee),0) FROM surgeries s WHERE s.reg_id=r.id AND s.admission_id IS NULL AND s.status!='取消') op FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status='待批價' ORDER BY r.id")->fetchAll();

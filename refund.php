@@ -7,7 +7,8 @@ if (isset($_GET['cancel'])) {
     $r = $pdo->query("SELECT * FROM registrations WHERE id=$reg_id")->fetch();
     if ($r && in_array($r['status'], ['掛號','待批價'], true)) {
         $pdo->prepare("UPDATE registrations SET status='退掛' WHERE id=?")->execute([$reg_id]);
-        flash_set('已退掛：' . $r['reg_no']);
+        $n_op = void_outpatient_surgeries($pdo, $reg_id);
+        flash_set('已退掛：' . $r['reg_no'] . ($n_op ? "（同步作廢門診手術 $n_op 台）" : ''));
     } else { flash_set('僅 掛號/待批價 可直接退掛，已收費請走退費'); }
     redirect('refund.php');
 }
@@ -33,8 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'refund')
     $pdo->prepare('INSERT INTO refunds(reg_id,bill_id,amount,reason,restock,created_by) VALUES(?,?,?,?,?,?)')
         ->execute([$reg_id, $bill_id, $amount, $reason, $restock, $_SESSION['user']['username'] ?? '']);
     $pdo->prepare("UPDATE registrations SET status='退掛' WHERE id=?")->execute([$reg_id]);
+    $n_op = void_outpatient_surgeries($pdo, $reg_id);
     $pdo->commit();
-    flash_set('已退掛' . ($amount ? '退費 ' . number_format($amount) . ' 元' : '') . ($restock ? '（已回補庫存）' : ''));
+    flash_set('已退掛' . ($amount ? '退費 ' . number_format($amount) . ' 元' : '') . ($restock ? '（已回補庫存）' : '') . ($n_op ? "、同步作廢門診手術 $n_op 台" : ''));
     redirect('refund.php');
 }
 $cands = $pdo->query("SELECT r.*, p.name pname, p.chart_no, (SELECT bill_no FROM bills b WHERE b.reg_id=r.id ORDER BY b.id DESC LIMIT 1) bill_no FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status IN ('掛號','待批價','待領藥','結案') ORDER BY r.id DESC LIMIT 50")->fetchAll();
