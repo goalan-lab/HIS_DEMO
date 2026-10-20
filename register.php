@@ -6,11 +6,30 @@ $sel_patient = null;
 if (!empty($_GET['patient_id'])) { $st = $pdo->prepare('SELECT * FROM patients WHERE id=?'); $st->execute([$_GET['patient_id']]); $sel_patient = $st->fetch(); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'reg') {
     $pid = (int)$_POST['patient_id'];
+    $vdate = $_POST['visit_date'] ?: today();
+    $vslot = $_POST['slot'];
+    $vdid = $_POST['doctor_id'] ? (int)$_POST['doctor_id'] : null;
+    // 班表檢查：有班＋開診＋未額滿
+    if ($vdid) {
+        $wd = (int)date('w', strtotime($vdate));
+        $st = $pdo->prepare('SELECT * FROM schedules WHERE doctor_id=? AND weekday=? AND slot=? LIMIT 1');
+        $st->execute([$vdid, $wd, $vslot]); $sch = $st->fetch();
+        if (!$sch) { flash_set('該醫師此時段無班表，不可掛號'); redirect('register.php'); }
+        if (!(int)$sch['active']) { flash_set('該時段停診，不可掛號'); redirect('register.php'); }
+        $cnt = $pdo->query("SELECT COUNT(*) c FROM registrations WHERE doctor_id=$vdid AND visit_date=" . $pdo->quote($vdate) . " AND slot=" . $pdo->quote($vslot) . " AND status!='退掛'")->fetch()['c'];
+        if ($cnt >= (int)$sch['quota']) { flash_set('該時段已額滿（' . $sch['quota'] . '）'); redirect('register.php'); }
+    }
     $reg_no = gen_no($pdo, 'R', 'registrations', 'reg_no');
-    $st = $pdo->prepare('INSERT INTO registrations(reg_no,patient_id,visit_date,slot,dept,doctor_id,status,reg_fee,exam_fee) VALUES(?,?,?,?,?,?,?, ?,?)');
-    $st->execute([$reg_no, $pid, $_POST['visit_date'] ?: today(), $_POST['slot'], $_POST['dept'], $_POST['doctor_id'] ?: null, '掛號', DEFAULT_REG_FEE, DEFAULT_EXAM_FEE]);
+    // 診間號碼：同醫師同日同時段最大號+1
+    $qno = 1;
+    if ($vdid) {
+        $mx = $pdo->query("SELECT MAX(queue_no) m FROM registrations WHERE doctor_id=$vdid AND visit_date=" . $pdo->quote($vdate) . " AND slot=" . $pdo->quote($vslot))->fetch()['m'];
+        $qno = ((int)$mx) + 1;
+    }
+    $st = $pdo->prepare('INSERT INTO registrations(reg_no,patient_id,visit_date,slot,dept,doctor_id,queue_no,status,reg_fee,exam_fee) VALUES(?,?,?,?,?,?,?,?, ?,?)');
+    $st->execute([$reg_no, $pid, $vdate, $vslot, $_POST['dept'], $vdid, $qno, '掛號', DEFAULT_REG_FEE, DEFAULT_EXAM_FEE]);
     $reg_id = (int)$pdo->lastInsertId();
-    flash_set('掛號成功：' . $reg_no);
+    flash_set('掛號成功：' . $reg_no . '（' . $vslot . '第 ' . $qno . ' 號）');
     redirect('register.php?reg_id=' . $reg_id);
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'rx') {

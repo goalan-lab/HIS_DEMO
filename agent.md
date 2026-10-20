@@ -43,6 +43,8 @@
 - refunds(id, reg_id FK, bill_id FK, amount, reason, restock 是否回補, created_by)
 - drugs(id, code UNIQUE, name, spec, unit, price, stock)：demo D001~D005
 - prescriptions(id, reg_id FK, drug_id FK, qty, usage_note, dispensed)
+- schedules(id, doctor_id FK, weekday 0-6, slot, room, quota 限額, active)：週一~六早午晚預設54筆
+- registrations 加 queue_no 診間號、called_at 叫號時間；看診中狀態正式啟用（叫號用）
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 

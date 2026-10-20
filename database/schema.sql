@@ -29,6 +29,18 @@ CREATE TABLE IF NOT EXISTS doctors (
   room VARCHAR(20) NULL
 );
 
+CREATE TABLE IF NOT EXISTS schedules (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT NOT NULL,
+  weekday TINYINT NOT NULL COMMENT '0=日..6=六',
+  slot ENUM('早診','午診','晚診') NOT NULL,
+  room VARCHAR(20) NULL,
+  quota INT NOT NULL DEFAULT 30 COMMENT '掛號限額',
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+  UNIQUE KEY uq_sched (doctor_id, weekday, slot)
+);
+
 CREATE TABLE IF NOT EXISTS registrations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   reg_no VARCHAR(20) NOT NULL UNIQUE COMMENT '掛號單號',
@@ -37,6 +49,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   slot ENUM('早診','午診','晚診') NOT NULL DEFAULT '早診',
   dept VARCHAR(50) NOT NULL DEFAULT '家醫科',
   doctor_id INT NULL,
+  queue_no INT NULL COMMENT '診間號碼',
+  called_at DATETIME NULL COMMENT '叫號時間',
   status ENUM('掛號','看診中','待批價','待領藥','結案','退掛') NOT NULL DEFAULT '掛號',
   reg_fee INT NOT NULL DEFAULT 150,
   exam_fee INT NOT NULL DEFAULT 350,

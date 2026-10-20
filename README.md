@@ -4,7 +4,7 @@
 
 ## 功能
 - 病歷管理 (`patients.php`)
-- 門診掛號 + 看診開處方 (`register.php`)
+- 門診掛號 + 看診開處方 (`register.php`：接班表檢查＋自動診間號)
 - 批價收費 + 收據列印 (`billing.php`、`receipt.php?reg_id=`)
 - 退掛退費 (`refund.php`：未收費直接退掛，已收費作廢帳單＋可回補庫存)
 - 藥局發藥 + 庫存 (`pharmacy.php`)
