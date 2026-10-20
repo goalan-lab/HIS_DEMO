@@ -59,14 +59,22 @@ $docs = $pdo->query('SELECT * FROM doctors ORDER BY id')->fetchAll();
 <?php if ($sel): $days = max(1, (int)((strtotime($sel['discharge_date'] ?? today()) - strtotime($sel['admit_date'])) / 86400) + 1);
 $ords = $pdo->query("SELECT * FROM ipd_orders WHERE admission_id={$sel['id']} ORDER BY id")->fetchAll();
 $osum = array_sum(array_map(fn($o) => $o['price']*$o['qty'], $ords));
-$bedsum = $days * (int)$sel['bed_fee']; ?>
+$ops = $pdo->query("SELECT s.*, r.name room_name FROM surgeries s LEFT JOIN op_rooms r ON r.id=s.op_room_id WHERE s.admission_id={$sel['id']} AND s.status!='取消' ORDER BY s.op_date, s.start_time")->fetchAll();
+$opsum = array_sum(array_map(fn($o) => $o['fee'], $ops));
+$bedsum = $days * (int)$sel['bed_fee'];
+$grand = $bedsum + $osum + $opsum; ?>
 <div class="card shadow-sm mt-3"><div class="card-header fw-bold">住院單 <?= h($sel['adm_no'].' '.$sel['pname']) ?>（<?= h($sel['status']) ?>）</div><div class="card-body">
 <p>病床：<?= h($sel['wname'].'-'.$sel['bed_no']) ?>　主治：<?= h($sel['dname']) ?>　入院：<?= h($sel['admit_date']) ?>　出院：<?= h($sel['discharge_date'] ?? '-') ?><br>
-天數 <b><?= $days ?></b>　病床費 <b><?= number_format($bedsum) ?></b>　醫囑費 <b><?= number_format($osum) ?></b>　合計 <b class="text-danger"><?= number_format($bedsum+$osum) ?></b></p>
+天數 <b><?= $days ?></b>　病床費 <b><?= number_format($bedsum) ?></b>　醫囑費 <b><?= number_format($osum) ?></b>　手術費 <b><?= number_format($opsum) ?></b>　合計 <b class="text-danger"><?= number_format($grand) ?></b></p>
 <?php if ($sel['status'] === '住院中'): ?><a class="btn btn-sm btn-outline-primary" href="orders.php?adm_id=<?= $sel['id'] ?>">開醫囑</a>
 <a class="btn btn-sm btn-outline-info" href="nursing.php?adm_id=<?= $sel['id'] ?>">護理紀錄</a><?php endif; ?>
 <table class="table table-sm mt-2"><tr><th>醫囑</th><th>數量</th><th>金額</th><th>狀態</th></tr>
 <?php foreach ($ords as $o): ?><tr><td><?= h('['.$o['order_type'].'] '.$o['item_name']) ?></td><td><?= $o['qty'] ?></td><td><?= number_format($o['price']*$o['qty']) ?></td><td><?= h($o['status']) ?></td></tr><?php endforeach; ?></table>
+<?php if ($ops): ?><h6 class="mt-3">手術</h6><table class="table table-sm"><tr><th>手術號</th><th>日期</th><th>術式</th><th>刀房</th><th>手術費</th><th>狀態</th></tr>
+<?php foreach ($ops as $op): ?><tr><td><?= h($op['op_no']) ?></td><td><?= h($op['op_date']) ?></td><td><?= h($op['op_name']) ?></td>
+<td><?= h($op['room_name'] ?? '-') ?></td>
+<td><?= number_format($op['fee']) ?></td><td><?= h($op['status']) ?></td></tr><?php endforeach; ?></table>
+<p class="small text-muted">手術費已併入出院合計；取消之手術不計費。</p><?php endif; ?>
 </div></div><?php endif; ?>
 </div></div>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
