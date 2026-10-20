@@ -1,6 +1,6 @@
 -- HIS_DEMO MVP schema: 病人 / 掛號 / 批價 / 處方 / 藥品
-CREATE DATABASE IF NOT EXISTS alan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE alan;
+CREATE DATABASE IF NOT EXISTS his_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE his_demo;
 
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
