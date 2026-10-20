@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $p = $_POST['password'] ?? '';
     // 內建 demo 帳號 (install.php 會寫入 users 表, 沒裝也能登入)
     if ($u === 'admin' && $p === 'his1234') {
-        $_SESSION['user'] = ['username' => 'admin', 'role' => '管理'];
+        $_SESSION['user'] = ['username' => 'admin', 'role' => '主管', 'uid' => 0];
         redirect('index.php');
     }
     try {
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute([$u]);
         $row = $st->fetch();
         if ($row && password_verify($p, $row['password_hash'])) {
-            $_SESSION['user'] = ['username' => $row['username'], 'role' => $row['role']];
+            $_SESSION['user'] = ['username' => $row['username'], 'role' => $row['role'], 'uid' => (int)$row['id']];
             redirect('index.php');
         } else { $err = '帳號或密碼錯誤 (預設 admin / his1234)'; }
     } catch (Throwable $e) { $err = '資料庫尚未安裝，請先到 install.php；或用 admin / his1234 預覽登入。'; }
@@ -32,7 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container" style="max-width:420px;margin-top:10vh">
 <div class="card shadow p-4">
 <h4 class="fw-bold mb-1">🏥 <?= h(APP_NAME) ?></h4>
-<p class="text-muted">預設帳號 <code>admin</code> / <code>his1234</code></p>
+<p class="text-muted">預設帳號 <code>admin</code> / <code>his1234</code>（主管）</p>
+<table class="table table-sm small"><tr><th>角色</th><th>帳號</th></tr>
+<tr><td>主管</td><td>admin / his1234</td></tr>
+<tr><td>醫師</td><td>doctor / his1234</td></tr>
+<tr><td>護理</td><td>nurse / his1234</td></tr>
+<tr><td>收銀</td><td>cashier / his1234</td></tr></table>
 <?php if ($err): ?><div class="alert alert-danger"><?= h($err) ?></div><?php endif; ?>
 <form method="post">
 <div class="mb-3"><label class="form-label">帳號</label><input class="form-control" name="username" value="admin"></div>

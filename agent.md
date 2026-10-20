@@ -6,6 +6,19 @@
 原生 PHP + Bootstrap 5 + MySQL/MariaDB 的門診 HIS 最小 MVP，跑在 Windows XAMPP（D:\xampp\htdocs\HIS_DEMO），
 涵蓋：病歷管理 → 門診掛號＋開處方 → 批價收費 → 藥局發藥＋扣庫存 → 營運報表。
 
+## 1.5 角色權限（RBAC，2026-10 新增）
+- 四角色：主管（全頁）／醫師／護理／收銀；舊值「掛號/管理」自動視為主管。
+  - demo 帳號（密碼皆 his1234）：admin=主管、doctor=醫師、nurse=護理、cashier=收銀。
+- 中央配置：config/permissions.php
+  - ROLE_PAGE_ACCESS：各角色可開啟頁面白名單（require_login 統一擋，GET/POST 皆然）。
+  - can('mod.action')：按鈕/action 層權限表（如 lab.collect=護理、lab.result=醫師、surgery.flow=醫護）。
+  - nav_items()：header 導覽依角色過濾；users.php（帳號管理，主管專屬：建帳號/改角色/重設密碼，禁把自己降成非主管）。
+  - 導覽項依 ROLE_PAGE_ACCESS 決定：主管見全部 16 項；醫師/護理/收銀各見子集（例：收銀無 診斷/住院/手術/報表/健保）。
+- 頁面層：includes/functions.php require_login() 依 ROLE_PAGE_ACCESS 擋頁；公共頁 login/install 免登入，receipt/board/print/result 免角色檢查（登入者皆可看）。
+- 舊安裝升級：執行 _migrate_roles.php 一次（補 demo 帳號＋admin 改主管角色）；新安裝 install.php 已內建。
+- schema：users.role 註解改為 主管/醫師/護理/收銀；seed 四 demo 帳號。
+- 測試：_test_roles.php 驗證 can()/can_page()/nav_items() 邏輯（不觸 DB，純 session 模擬）。
+
 ## 2. 技術棧與環境
 - 後端：原生 PHP 8.2（D:\xampp\php\php.exe），無框架、無 composer，無路由，直接對應 .php 檔。
 - 前端：Bootstrap 5.3.3 CDN + 內聯 PHP 模板（includes/header.php / footer.php）。

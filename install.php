@@ -17,7 +17,11 @@ if (isset($_GET['run'])) {
         }
         // 重置 admin 密碼 his1234
         $hash = password_hash('his1234', PASSWORD_DEFAULT);
-        $pdo->exec("INSERT INTO users (username,password_hash,role) VALUES ('admin','$hash','管理') ON DUPLICATE KEY UPDATE password_hash='$hash'");
+        $pdo->exec("INSERT INTO users (username,password_hash,role) VALUES ('admin','$hash','主管') ON DUPLICATE KEY UPDATE password_hash='$hash', role='主管'");
+        // 分角色 demo 帳號（收銀/護理/醫師，同密碼 his1234）
+        foreach ([['cashier','收銀'],['nurse','護理'],['doctor','醫師']] as [$u, $r]) {
+            $pdo->exec("INSERT INTO users (username,password_hash,role) VALUES ('$u','$hash','$r') ON DUPLICATE KEY UPDATE role='$r'");
+        }
         $msg = '安裝成功！預設帳號 admin / his1234';
         $ok = true;
     } catch (Throwable $e) { $msg = '安裝失敗：' . $e->getMessage(); }

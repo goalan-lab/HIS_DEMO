@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 if (isset($_GET['pay'])) {
+    if (!can('billing.pay')) { flash_set('您的角色無收費權限'); redirect('billing.php'); }
     $reg_id = (int)$_GET['pay'];
     $r = $pdo->query("SELECT * FROM registrations WHERE id=$reg_id")->fetch();
     if (!$r || $r['status'] === '退掛') { flash_set('該掛號已退掛，不可收費'); redirect('billing.php'); }
@@ -18,6 +19,7 @@ if (isset($_GET['pay'])) {
     redirect('pharmacy.php?reg_id=' . $reg_id);
 }
 if (isset($_GET['refund'])) {
+    if (!can('billing.refund')) { flash_set('您的角色無退費權限'); redirect('billing.php'); }
     // 退費：只允許已收費且未發藥結案者；已發藥需先回補庫存由 refund.php 處理
     $reg_id = (int)$_GET['refund'];
     $r = $pdo->query("SELECT * FROM registrations WHERE id=$reg_id")->fetch();

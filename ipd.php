@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'admit') {
+    if (!can('ipd.admit')) { flash_set('您的角色無辦理入院權限'); redirect('ipd.php'); }
     $bed_id = (int)$_POST['bed_id'];
     $bed = $pdo->query("SELECT * FROM beds WHERE id=$bed_id")->fetch();
     if (!$bed || $bed['status'] !== '空床') { flash_set('該床非空床'); redirect('ipd.php'); }
@@ -13,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'admit') 
     redirect('ipd.php');
 }
 if (isset($_GET['discharge'])) {
+    if (!can('ipd.discharge')) { flash_set('您的角色無出院結算權限'); redirect('ipd.php'); }
     $aid = (int)$_GET['discharge'];
     $a = $pdo->query("SELECT * FROM admissions WHERE id=$aid")->fetch();
     if ($a && $a['status'] === '住院中') {
@@ -23,6 +25,7 @@ if (isset($_GET['discharge'])) {
     redirect('ipd.php?adm_id=' . $aid);
 }
 if (isset($_GET['clean_done'])) {
+    if (!can('ipd.clean')) { flash_set('您的角色無此操作權限'); redirect('ipd.php'); }
     $pdo->prepare("UPDATE beds SET status='空床' WHERE id=?")->execute([(int)$_GET['clean_done']]);
     redirect('ipd.php');
 }
@@ -48,13 +51,13 @@ $docs = $pdo->query('SELECT * FROM doctors ORDER BY id')->fetchAll();
 <table class="table table-sm mb-0"><tr><th>病房-床</th><th>費用/日</th><th>狀態</th><th></th></tr>
 <?php foreach ($beds as $b): ?><tr class="<?= $b['status']==='空床' ? '' : ($b['status']==='佔床' ? 'table-danger' : 'table-warning') ?>">
 <td><?= h($b['wname'].'-'.$b['bed_no']) ?></td><td><?= number_format($b['bed_fee']) ?></td><td><?= h($b['status']) ?></td>
-<td><?php if ($b['status']==='清潔中'): ?><a class="btn btn-sm btn-outline-success" href="ipd.php?clean_done=<?= $b['id'] ?>">清潔完</a><?php endif; ?></td></tr><?php endforeach; ?></table></div></div>
+<td><?php if ($b['status']==='清潔中' && can('ipd.clean')): ?><a class="btn btn-sm btn-outline-success" href="ipd.php?clean_done=<?= $b['id'] ?>">清潔完</a><?php endif; ?></td></tr><?php endforeach; ?></table></div></div>
 <div class="col-md-8"><div class="card shadow-sm"><div class="card-header fw-bold">住院中</div>
 <table class="table table-hover table-sm mb-0"><tr><th>住院號</th><th>病人</th><th>病床</th><th>入院日</th><th></th></tr>
 <?php foreach ($inpatients as $a): ?><tr><td><?= h($a['adm_no']) ?></td><td><?= h($a['chart_no'].' '.$a['pname']) ?></td>
 <td><?= h($a['wname'].'-'.$a['bed_no']) ?></td><td><?= h($a['admit_date']) ?></td>
 <td class="text-nowrap"><a class="btn btn-sm btn-primary" href="ipd.php?adm_id=<?= $a['id'] ?>">醫囑護理</a>
-<a class="btn btn-sm btn-success" href="ipd.php?discharge=<?= $a['id'] ?>" onclick="return confirm('確認出院結算？')">出院</a></td></tr><?php endforeach; ?></table>
+<?php if (can('ipd.discharge')): ?><a class="btn btn-sm btn-success" href="ipd.php?discharge=<?= $a['id'] ?>" onclick="return confirm('確認出院結算？')">出院</a><?php endif; ?></td></tr><?php endforeach; ?></table>
 <?php if (!$inpatients): ?><div class="card-body text-muted">目前無住院。</div><?php endif; ?></div>
 <?php if ($sel): $days = max(1, (int)((strtotime($sel['discharge_date'] ?? today()) - strtotime($sel['admit_date'])) / 86400) + 1);
 $ords = $pdo->query("SELECT * FROM ipd_orders WHERE admission_id={$sel['id']} ORDER BY id")->fetchAll();
@@ -66,8 +69,7 @@ $grand = $bedsum + $osum + $opsum; ?>
 <div class="card shadow-sm mt-3"><div class="card-header fw-bold">住院單 <?= h($sel['adm_no'].' '.$sel['pname']) ?>（<?= h($sel['status']) ?>）</div><div class="card-body">
 <p>病床：<?= h($sel['wname'].'-'.$sel['bed_no']) ?>　主治：<?= h($sel['dname']) ?>　入院：<?= h($sel['admit_date']) ?>　出院：<?= h($sel['discharge_date'] ?? '-') ?><br>
 天數 <b><?= $days ?></b>　病床費 <b><?= number_format($bedsum) ?></b>　醫囑費 <b><?= number_format($osum) ?></b>　手術費 <b><?= number_format($opsum) ?></b>　合計 <b class="text-danger"><?= number_format($grand) ?></b></p>
-<?php if ($sel['status'] === '住院中'): ?><a class="btn btn-sm btn-outline-primary" href="orders.php?adm_id=<?= $sel['id'] ?>">開醫囑</a>
-<a class="btn btn-sm btn-outline-info" href="nursing.php?adm_id=<?= $sel['id'] ?>">護理紀錄</a><?php endif; ?>
+<?php if ($sel['status'] === '住院中'): ?><?php if (can('ipd.orders')): ?><a class="btn btn-sm btn-outline-primary" href="orders.php?adm_id=<?= $sel['id'] ?>">開醫囑</a><?php endif; ?><?php if (can('nursing.add')): ?><a class="btn btn-sm btn-outline-info" href="nursing.php?adm_id=<?= $sel['id'] ?>">護理紀錄</a><?php endif; ?><?php endif; ?>
 <table class="table table-sm mt-2"><tr><th>醫囑</th><th>數量</th><th>金額</th><th>狀態</th></tr>
 <?php foreach ($ords as $o): ?><tr><td><?= h('['.$o['order_type'].'] '.$o['item_name']) ?></td><td><?= $o['qty'] ?></td><td><?= number_format($o['price']*$o['qty']) ?></td><td><?= h($o['status']) ?></td></tr><?php endforeach; ?></table>
 <?php if ($ops): ?><h6 class="mt-3">手術</h6><table class="table table-sm"><tr><th>手術號</th><th>日期</th><th>術式</th><th>刀房</th><th>手術費</th><th>狀態</th></tr>

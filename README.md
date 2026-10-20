@@ -22,6 +22,17 @@
 2. 開 `http://localhost/HIS_DEMO/install.php` 執行一鍵建表
 3. 用 `admin / his1234` 登入 `http://localhost/HIS_DEMO/login.php`
 
+## 角色帳號（分角色權限）
+| 角色 | 帳號 | 密碼 | 可見導覽 / 能做的事 |
+|------|------|------|----------------------|
+| 主管 | admin | his1234 | 全部頁面（含報表、健保對帳、帳號管理） |
+| 醫師 | doctor | his1234 | 掛號、處方、醫囑、檢驗報告、住院、手術 |
+| 護理 | nurse | his1234 | 叫號、發藥、護理紀錄、住院、手術備案、檢驗採檢 |
+| 收銀 | cashier | his1234 | 掛號、批價收費、退掛退費、發藥、藥品庫存 |
+
+導覽列與功能按鈕會依登入角色自動顯隱；無權限的頁面直接連會跳轉並提示。
+既有安裝可用 `_migrate_roles.php` 一次補上各角色 demo 帳號。
+
 ## 資料庫
 - DB: `his_demo`
 - 表: users / patients / doctors / registrations / bills / drugs / prescriptions

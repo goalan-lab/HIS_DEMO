@@ -1,5 +1,7 @@
 <?php
 // 共用函式
+if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../config/permissions.php';
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function redirect($url) { header('Location: ' . $url); exit; }
 function today() { return date('Y-m-d'); }
@@ -28,8 +30,15 @@ function void_outpatient_surgeries(PDO $pdo, int $reg_id): int {
 
 function require_login() {
     if (session_status() === PHP_SESSION_NONE) session_start();
-    $public = ['login.php', 'install.php'];
+    $public = ['login.php', 'install.php']; // 完全免登入
+    $semi = ['receipt.php', 'board.php', 'print.php', 'result.php']; // 公共展示頁：登入者皆可看，跳過角色檢查
     $cur = basename($_SERVER['SCRIPT_NAME'] ?? '');
     if (in_array($cur, $public, true)) return;
     if (empty($_SESSION['user'])) { redirect('login.php'); }
+    if (in_array($cur, $semi, true)) return;
+    // 角色頁面權限（無權限一律擋下，GET/POST 皆然；按鈕級細項另於頁面內以 can_roles() 控制）
+    if (!can_page($cur)) {
+        flash_set('您的角色（' . current_role() . '）無權限開啟「' . $cur . '」');
+        redirect('index.php');
+    }
 }

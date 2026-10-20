@@ -5,6 +5,7 @@ $doctors = $pdo->query('SELECT * FROM doctors ORDER BY id')->fetchAll();
 $sel_patient = null;
 if (!empty($_GET['patient_id'])) { $st = $pdo->prepare('SELECT * FROM patients WHERE id=?'); $st->execute([$_GET['patient_id']]); $sel_patient = $st->fetch(); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'reg') {
+    if (!can('register.reg')) { flash_set('您的角色無掛號權限'); redirect('register.php'); }
     $pid = (int)$_POST['patient_id'];
     $vdate = $_POST['visit_date'] ?: today();
     $vslot = $_POST['slot'];
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'reg') {
     redirect('register.php?reg_id=' . $reg_id);
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'rx') {
+    if (!can('register.rx')) { flash_set('您的角色無開處方權限'); redirect('register.php'); }
     $reg_id = (int)$_POST['reg_id'];
     $st = $pdo->prepare('INSERT INTO prescriptions(reg_id,drug_id,qty,usage_note) VALUES(?,?,?,?)');
     $st->execute([$reg_id, (int)$_POST['drug_id'], max(1,(int)$_POST['qty']), trim($_POST['usage_note'] ?? '')]);
@@ -44,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'rx') {
     redirect('register.php?reg_id=' . $reg_id);
 }
 if (isset($_GET['done'])) {
+    if (!can('register.done')) { flash_set('您的角色無送批價權限'); redirect('register.php'); }
     $pdo->prepare("UPDATE registrations SET status='待批價' WHERE id=?")->execute([(int)$_GET['done']]);
     flash_set('看診完成，已送批價');
     redirect('billing.php');
@@ -62,7 +65,7 @@ $drugs = $pdo->query('SELECT * FROM drugs ORDER BY id')->fetchAll();
 $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE visit_date=CURDATE() ORDER BY id DESC LIMIT 50")->fetchAll();
 ?>
 <div class="row g-3">
-<div class="col-md-5"><div class="card shadow-sm"><div class="card-header fw-bold">掛號</div><div class="card-body">
+<div class="col-md-5"><?php if (can('register.reg')): ?><div class="card shadow-sm"><div class="card-header fw-bold">掛號</div><div class="card-body">
 <form method="post"><input type="hidden" name="act" value="reg">
 <div class="mb-2"><label class="form-label">病人</label>
 <select name="patient_id" class="form-select" required>
@@ -76,9 +79,9 @@ $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patient
 <div class="col"><label class="form-label">醫師</label><select name="doctor_id" class="form-select"><?php foreach ($doctors as $d): ?><option value="<?= $d['id'] ?>"><?= h($d['dept'].' '.$d['name']) ?></option><?php endforeach; ?></select></div></div>
 <div class="mt-2"><label class="form-label">身分別</label><select name="ins_type" class="form-select"><option>健保</option><option>自費</option><option>重大傷病</option><option>榮民</option><option>低收</option></select>
 <div class="form-text">健保部分負擔預設 150；自費不申報。</div></div>
-<button class="btn btn-primary w-100 mt-3">確認掛號</button></form></div></div></div>
+<button class="btn btn-primary w-100 mt-3">確認掛號</button></form></div></div><?php endif; ?></div>
 <div class="col-md-7"><div class="card shadow-sm"><div class="card-header fw-bold">開處方 <?= $reg ? '— '.h($reg['reg_no'].' '.$reg['pname']) : '' ?></div><div class="card-body">
-<?php if ($reg): ?>
+<?php if ($reg && can('register.rx')): ?>
 <form method="post" class="row g-2"><input type="hidden" name="act" value="rx"><input type="hidden" name="reg_id" value="<?= $reg['id'] ?>">
 <div class="col-md-5"><select name="drug_id" class="form-select"><?php foreach ($drugs as $d): ?><option value="<?= $d['id'] ?>"><?= h($d['name'].' $'.$d['price']) ?></option><?php endforeach; ?></select></div>
 <div class="col-md-2"><input name="qty" type="number" value="3" min="1" class="form-control"></div>
@@ -89,7 +92,7 @@ $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patient
 <tr><td><?= h($x['dname']) ?></td><td><?= $x['qty'] ?></td><td><?= h($x['usage_note']) ?></td><td><?= number_format($x['price']*$x['qty']) ?></td></tr>
 <?php endforeach; ?></table>
 <p>藥費小計 <b><?= number_format($sum) ?></b> 元</p>
-<a class="btn btn-warning" href="register.php?done=<?= $reg['id'] ?>" onclick="return confirm('送批價？')">看診完成送批價</a>
+<?php if (can('register.done')): ?><a class="btn btn-warning" href="register.php?done=<?= $reg['id'] ?>" onclick="return confirm('送批價？')">看診完成送批價</a><?php endif; ?>
 <?php else: ?><p class="text-muted">先掛號或點右下隊列開方。</p><?php endif; ?>
 </div></div>
 <div class="card shadow-sm mt-3"><div class="card-header">今日隊列</div>

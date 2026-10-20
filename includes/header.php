@@ -42,21 +42,9 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
     <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
     <div class="collapse navbar-collapse" id="nav">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link <?= nav_active('index.php') ?>" href="index.php">總覽</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('patients.php') ?>" href="patients.php">病歷管理</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('register.php') ?>" href="register.php">門診掛號</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('schedules.php') ?>" href="schedules.php">醫師班表</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('queue.php') ?>" href="queue.php">診間叫號</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('billing.php') ?>" href="billing.php">批價收費</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('receipt.php') ?>" href="billing.php">收據</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('refund.php') ?>" href="refund.php">退掛退費</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('pharmacy.php') ?>" href="pharmacy.php">藥局發藥</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('inventory.php') ?>" href="inventory.php">藥品庫存</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('ipd.php') ?>" href="ipd.php">住院</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('lab.php') ?>" href="lab.php">檢驗檢查</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('nhi.php') ?>" href="nhi.php">健保對帳</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('surgery.php') ?>" href="surgery.php">手術排程</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_active('reports.php') ?>" href="reports.php">報表</a></li>
+        <?php foreach (nav_items() as [$f, $label]): ?>
+        <li class="nav-item"><a class="nav-link <?= nav_active($f) ?>" href="<?= $f ?>"><?= h($label) ?></a></li>
+        <?php endforeach; ?>
       </ul>
       <div class="nav-user">
       <span class="navbar-text text-white">👤 <?= h($user['username'] ?? '') ?> (<?= h($user['role'] ?? '') ?>)</span>

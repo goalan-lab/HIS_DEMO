@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT '掛號', -- 掛號/批價/藥局/管理
+  role VARCHAR(20) NOT NULL DEFAULT '收銀', -- 主管/醫師/護理/收銀
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -269,9 +269,12 @@ CREATE TABLE IF NOT EXISTS exam_results (
   FOREIGN KEY (order_id) REFERENCES exam_orders(id)
 );
 
--- 預設帳號 admin / his1234
+-- 預設帳號 admin / his1234（install.php 會重設各 demo 帳號密碼）
 INSERT IGNORE INTO users (username, password_hash, role) VALUES
-('admin', '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '管理');
+('admin',   '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '主管'),
+('doctor',  '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '醫師'),
+('nurse',   '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '護理'),
+('cashier', '$2y$10$wH4m6o6o6o6o6o6o6o6o6e6J1Gx7vQ5qQ5qQ5qQ5qQ5qQ5qQ5qQ5q', '收銀');
 
 -- 預設醫師
 INSERT IGNORE INTO doctors (id, name, dept, room) VALUES

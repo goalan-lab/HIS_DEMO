@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'add') {
+    if (!can('surgery.add')) { flash_set('您的角色無排手術權限'); redirect('surgery.php'); }
     $room = (int)$_POST['op_room_id'];
     $date = $_POST['op_date'];
     $st = $_POST['start_time'] ?: null;
@@ -20,10 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'add') {
 }
 $flow = ['術前準備' => 'prep', '手術中' => 'start', '恢復中' => 'recover', '完成' => 'done'];
 $back_date = $_GET['date'] ?? today();
-foreach (['prep' => '術前準備', 'start' => '手術中', 'recover' => '恢復中', 'done' => '完成'] as $k => $v) {
-    if (isset($_GET[$k])) { $pdo->prepare('UPDATE surgeries SET status=? WHERE id=?')->execute([$v, (int)$_GET[$k]]); redirect('surgery.php?date=' . $back_date); }
+foreach ($flow as $k => $v) {
+    if (isset($_GET[$k])) {
+        $perm = $k === 'prep' ? 'surgery.prep' : (($k === 'start' || $k === 'recover' || $k === 'done') ? 'surgery.flow' : null);
+        if ($perm && !can($perm)) { flash_set('您的角色無手術流程操作權限'); redirect('surgery.php?date=' . $back_date); }
+        $pdo->prepare('UPDATE surgeries SET status=? WHERE id=?')->execute([$v, (int)$_GET[$k]]); redirect('surgery.php?date=' . $back_date);
+    }
 }
 if (isset($_GET['cancel'])) {
+    if (!can('surgery.cancel')) { flash_set('您的角色無取消手術權限'); redirect('surgery.php?date=' . $back_date); }
     $sid = (int)$_GET['cancel'];
     $s = $pdo->query("SELECT * FROM surgeries WHERE id=$sid")->fetch();
     // 保護：門診手術已併入帳單者（該掛號有已收未作廢帳單）禁直接取消，需走退費（退費會同步作廢手術）
@@ -44,7 +50,7 @@ $adms = $pdo->query("SELECT a.id, a.adm_no, p.name FROM admissions a JOIN patien
 $regs = $pdo->query("SELECT r.id, r.reg_no, p.name FROM registrations r JOIN patients p ON p.id=r.patient_id WHERE r.status!='退掛' ORDER BY r.id DESC LIMIT 50")->fetchAll();
 ?>
 <div class="row g-3">
-<div class="col-md-4"><div class="card shadow-sm"><div class="card-header fw-bold">新增手術排程</div><div class="card-body">
+<div class="col-md-4"><?php if (can('surgery.add')): ?><div class="card shadow-sm"><div class="card-header fw-bold">新增手術排程</div><div class="card-body">
 <form method="post"><input type="hidden" name="act" value="add">
 <div class="mb-2"><label class="form-label">病人*</label><select name="patient_id" class="form-select"><?php foreach ($allp as $p): ?><option value="<?= $p['id'] ?>"><?= h($p['chart_no'].' '.$p['name']) ?></option><?php endforeach; ?></select></div>
 <div class="mb-2"><label class="form-label">住院單（可不選）</label><select name="admission_id" class="form-select"><option value="">-- 無 --</option><?php foreach ($adms as $a): ?><option value="<?= $a['id'] ?>"><?= h($a['adm_no'].' '.$a['name']) ?></option><?php endforeach; ?></select></div>
@@ -59,7 +65,7 @@ $regs = $pdo->query("SELECT r.id, r.reg_no, p.name FROM registrations r JOIN pat
 <div class="col"><label class="form-label">結束</label><input type="time" name="end_time" class="form-control" value="10:00"></div></div>
 <div class="row g-2 mt-1"><div class="col"><label class="form-label">手術費</label><input name="fee" type="number" value="20000" min="0" class="form-control"></div>
 <div class="col"><label class="form-label">備註</label><input name="note" class="form-control"></div></div>
-<button class="btn btn-primary w-100 mt-2">確認排程</button></form></div></div></div>
+<button class="btn btn-primary w-100 mt-2">確認排程</button></form></div></div><?php endif; ?></div>
 <div class="col-md-8">
 <div class="card shadow-sm"><div class="card-header fw-bold d-flex justify-content-between">當日刀表
 <form class="d-flex gap-2" method="get"><input type="date" name="date" value="<?= h($date) ?>" class="form-control form-control-sm"><button class="btn btn-sm btn-outline-primary">查詢</button></form></div>
@@ -68,11 +74,12 @@ $regs = $pdo->query("SELECT r.id, r.reg_no, p.name FROM registrations r JOIN pat
 <td><?= h(($s['start_time'] ?? '-') . '~' . ($s['end_time'] ?? '-')) ?></td><td><?= h($s['rname'] ?? '-') ?></td>
 <td><?= h($s['op_name']) ?><br><small><?= h($s['pname'] . ($s['adm_no'] ? ' '.$s['adm_no'] : '')) ?></small></td>
 <td><?= h($s['dname']) ?></td><td><?= number_format($s['fee']) ?></td><td><?= h($s['status']) ?></td>
-<td class="text-nowrap"><?php if ($s['status']==='排程'): ?><a class="btn btn-sm btn-outline-primary" href="surgery.php?prep=<?= $s['id'] ?>&date=<?= h($date) ?>">術前</a><?php endif; ?>
-<?php if ($s['status']==='術前準備'): ?><a class="btn btn-sm btn-warning" href="surgery.php?start=<?= $s['id'] ?>&date=<?= h($date) ?>">開刀</a><?php endif; ?>
-<?php if ($s['status']==='手術中'): ?><a class="btn btn-sm btn-info" href="surgery.php?recover=<?= $s['id'] ?>&date=<?= h($date) ?>">恢復</a><?php endif; ?>
-<?php if ($s['status']==='恢復中'): ?><a class="btn btn-sm btn-success" href="surgery.php?done=<?= $s['id'] ?>&date=<?= h($date) ?>">完成</a><?php endif; ?>
-<?php if (!in_array($s['status'], ['完成','取消'], true)): if ((int)($s['billed'] ?? 0) > 0): ?><a class="btn btn-sm btn-outline-secondary" href="refund.php" title="已併入帳單，請走退費流程">退費</a><?php else: ?><a class="btn btn-sm btn-outline-danger" href="surgery.php?cancel=<?= $s['id'] ?>&date=<?= h($date) ?>" onclick="return confirm('取消手術？')">取消</a><?php endif; endif; ?></td></tr><?php endforeach; ?></table>
+<td class="text-nowrap"><?php $oper = can('surgery.flow'); ?>
+<?php if ($s['status']==='排程' && can('surgery.prep')): ?><a class="btn btn-sm btn-outline-primary" href="surgery.php?prep=<?= $s['id'] ?>&date=<?= h($date) ?>">術前</a><?php endif; ?>
+<?php if ($s['status']==='術前準備' && $oper): ?><a class="btn btn-sm btn-warning" href="surgery.php?start=<?= $s['id'] ?>&date=<?= h($date) ?>">開刀</a><?php endif; ?>
+<?php if ($s['status']==='手術中' && $oper): ?><a class="btn btn-sm btn-info" href="surgery.php?recover=<?= $s['id'] ?>&date=<?= h($date) ?>">恢復</a><?php endif; ?>
+<?php if ($s['status']==='恢復中' && $oper): ?><a class="btn btn-sm btn-success" href="surgery.php?done=<?= $s['id'] ?>&date=<?= h($date) ?>">完成</a><?php endif; ?>
+<?php if (!in_array($s['status'], ['完成','取消'], true)): if ((int)($s['billed'] ?? 0) > 0): ?><a class="btn btn-sm btn-outline-secondary" href="refund.php" title="已併入帳單，請走退費流程">退費</a><?php elseif ($oper): ?><a class="btn btn-sm btn-outline-danger" href="surgery.php?cancel=<?= $s['id'] ?>&date=<?= h($date) ?>" onclick="return confirm('取消手術？')">取消</a><?php endif; endif; ?></td></tr><?php endforeach; ?></table>
 <?php if (!$rows): ?><div class="card-body text-muted">當日無排程。</div><?php endif; ?></div>
 <div class="card shadow-sm mt-3"><div class="card-header fw-bold">未來排程（20筆）</div>
 <table class="table table-sm mb-0"><tr><th>日期</th><th>時間</th><th>術式</th><th>病人</th><th>狀態</th></tr>

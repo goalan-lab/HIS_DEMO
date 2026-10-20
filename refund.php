@@ -3,6 +3,7 @@ require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 // 未收費直接退掛
 if (isset($_GET['cancel'])) {
+    if (!can('refund.act')) { flash_set('您的角色無退掛權限'); redirect('refund.php'); }
     $reg_id = (int)$_GET['cancel'];
     $r = $pdo->query("SELECT * FROM registrations WHERE id=$reg_id")->fetch();
     if ($r && in_array($r['status'], ['掛號','待批價'], true)) {
@@ -14,6 +15,7 @@ if (isset($_GET['cancel'])) {
 }
 // 已收費退掛退費（含回補庫存選項）
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['act'] ?? '') === 'refund') {
+    if (!can('refund.act')) { flash_set('您的角色無退費權限'); redirect('refund.php'); }
     $reg_id = (int)$_POST['reg_id'];
     $reason = trim($_POST['reason'] ?? '退掛退費');
     $restock = isset($_POST['restock']) ? 1 : 0;
