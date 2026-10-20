@@ -18,7 +18,8 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
 <title><?= h(APP_NAME) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>body{background:#f4f6fb} .card{border-radius:14px}
-/* 導覽列按鈕過多時自動換行 */
+/* 導覽列按鈕過多時自動換行（含右側登出區） */
+#nav{flex-wrap:wrap;row-gap:8px}
 #nav .navbar-nav{flex-wrap:wrap;row-gap:6px;column-gap:4px}
 #nav .nav-link{position:relative;white-space:nowrap;padding:.35rem .8rem;border-radius:999px;font-weight:500;
   color:rgba(255,255,255,.82)!important;transition:all .22s ease}
@@ -30,7 +31,9 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
   box-shadow:0 4px 14px rgba(0,0,0,.3);transform:translateY(-1px)}
 #nav .nav-link.active::after{content:'';position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
   width:6px;height:6px;border-radius:50%;background:#ffd54d;box-shadow:0 0 8px #ffd54d}
-#nav .navbar-text{white-space:nowrap}</style>
+#nav .nav-user{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;row-gap:6px;margin-left:auto}
+#nav .navbar-text{white-space:nowrap}
+#nav .btn{white-space:nowrap}</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -52,8 +55,10 @@ function nav_active($f) { global $cur; return $cur === $f ? 'active' : ''; }
         <li class="nav-item"><a class="nav-link <?= nav_active('ipd.php') ?>" href="ipd.php">住院</a></li>
         <li class="nav-item"><a class="nav-link <?= nav_active('reports.php') ?>" href="reports.php">報表</a></li>
       </ul>
-      <span class="navbar-text text-white me-3">👤 <?= h($user['username'] ?? '') ?> (<?= h($user['role'] ?? '') ?>)</span>
+      <div class="nav-user">
+      <span class="navbar-text text-white">👤 <?= h($user['username'] ?? '') ?> (<?= h($user['role'] ?? '') ?>)</span>
       <a class="btn btn-light btn-sm" href="logout.php">登出</a>
+      </div>
     </div>
   </div>
 </nav>
