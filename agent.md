@@ -49,6 +49,7 @@
 - 進銷存：stock_txns(進貨發藥退藥盤點報廢流水)/stocktakes+items(盤點單)；發藥/退藥/盤點統一走 stock_apply 寫流水
 - 檢驗檢查：exam_items(9項預設)/exam_orders(L+ymd，reg或住院二選一)/exam_results(異常紅字)；門診批價＋收據已含檢驗費
 - 健保對帳：registrations 加 ins_type/copay/nhi_claim；nhi.php 月統計＋CSV（院內對帳，不含健保XML格式）
+- 手術排程：op_rooms(刀房A/B/C)＋surgeries(O+ymd 手術號，admission_id 可空掛住院、刀房時間重疊擋預約)；狀態流 排程→術前準備→手術中→恢復中→完成/取消（surgery.php 按鍵推進，跳轉保留日期）
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 

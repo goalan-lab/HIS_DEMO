@@ -204,6 +204,34 @@ CREATE TABLE IF NOT EXISTS nursing_notes (
   FOREIGN KEY (admission_id) REFERENCES admissions(id)
 );
 
+CREATE TABLE IF NOT EXISTS op_rooms (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(30) NOT NULL UNIQUE COMMENT '刀房',
+  active TINYINT(1) NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS surgeries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  op_no VARCHAR(20) NOT NULL UNIQUE COMMENT '手術號',
+  admission_id INT NULL COMMENT '可掛住院或直接排門診病人',
+  patient_id INT NOT NULL,
+  doctor_id INT NULL COMMENT '主刀',
+  op_room_id INT NULL,
+  op_name VARCHAR(100) NOT NULL COMMENT '術式',
+  op_date DATE NOT NULL,
+  start_time TIME NULL,
+  end_time TIME NULL,
+  anesthesia ENUM('局部','半身','全身','無') NOT NULL DEFAULT '局部',
+  fee INT NOT NULL DEFAULT 0 COMMENT '手術費',
+  status ENUM('排程','術前準備','手術中','恢復中','完成','取消') NOT NULL DEFAULT '排程',
+  note VARCHAR(200) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admission_id) REFERENCES admissions(id),
+  FOREIGN KEY (patient_id) REFERENCES patients(id),
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+  FOREIGN KEY (op_room_id) REFERENCES op_rooms(id)
+);
+
 CREATE TABLE IF NOT EXISTS exam_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   code VARCHAR(30) NOT NULL UNIQUE,
