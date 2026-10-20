@@ -9,3 +9,13 @@ config/local.php
 # temp / test
 _tmp/
 _ping_db.php
+
+# Build and Release Folders
+bin-debug/
+bin-release/
+[Oo]bj/
+[Bb]in/
+
+# Other files and folders
+.settings/
+
