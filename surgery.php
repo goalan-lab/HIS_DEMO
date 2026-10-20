@@ -23,9 +23,19 @@ $back_date = $_GET['date'] ?? today();
 foreach (['prep' => '術前準備', 'start' => '手術中', 'recover' => '恢復中', 'done' => '完成'] as $k => $v) {
     if (isset($_GET[$k])) { $pdo->prepare('UPDATE surgeries SET status=? WHERE id=?')->execute([$v, (int)$_GET[$k]]); redirect('surgery.php?date=' . $back_date); }
 }
-if (isset($_GET['cancel'])) { $pdo->prepare("UPDATE surgeries SET status='取消' WHERE id=?")->execute([(int)$_GET['cancel']]); redirect('surgery.php?date=' . $back_date); }
+if (isset($_GET['cancel'])) {
+    $sid = (int)$_GET['cancel'];
+    $s = $pdo->query("SELECT * FROM surgeries WHERE id=$sid")->fetch();
+    // 保護：門診手術已併入帳單者（該掛號有已收未作廢帳單）禁直接取消，需走退費（退費會同步作廢手術）
+    if ($s && $s['reg_id'] && !$s['admission_id']) {
+        $billed = $pdo->query("SELECT COUNT(*) c FROM bills WHERE reg_id=" . (int)$s['reg_id'] . " AND paid=1 AND voided=0")->fetch()['c'];
+        if ((int)$billed > 0) { flash_set('該手術已併入帳單，不可直接取消；請到 退掛退費 頁辦理退費（退費會同步作廢手術）'); redirect('surgery.php?date=' . $back_date); }
+    }
+    $pdo->prepare("UPDATE surgeries SET status='取消' WHERE id=?")->execute([$sid]);
+    redirect('surgery.php?date=' . $back_date);
+}
 $date = $_GET['date'] ?? today();
-$rows = $pdo->query("SELECT s.*, p.name pname, p.chart_no, d.name dname, r.name rname, a.adm_no FROM surgeries s JOIN patients p ON p.id=s.patient_id LEFT JOIN doctors d ON d.id=s.doctor_id LEFT JOIN op_rooms r ON r.id=s.op_room_id LEFT JOIN admissions a ON a.id=s.admission_id WHERE s.op_date=" . $pdo->quote($date) . " ORDER BY s.start_time, s.id")->fetchAll();
+$rows = $pdo->query("SELECT s.*, p.name pname, p.chart_no, d.name dname, r.name rname, a.adm_no, (SELECT COUNT(*) FROM bills b2 WHERE b2.reg_id=s.reg_id AND b2.paid=1 AND b2.voided=0) billed FROM surgeries s JOIN patients p ON p.id=s.patient_id LEFT JOIN doctors d ON d.id=s.doctor_id LEFT JOIN op_rooms r ON r.id=s.op_room_id LEFT JOIN admissions a ON a.id=s.admission_id WHERE s.op_date=" . $pdo->quote($date) . " ORDER BY s.start_time, s.id")->fetchAll();
 $upcoming = $pdo->query("SELECT s.*, p.name pname FROM surgeries s JOIN patients p ON p.id=s.patient_id WHERE s.op_date>=CURDATE() AND s.status IN ('排程','術前準備') ORDER BY s.op_date, s.start_time LIMIT 20")->fetchAll();
 $allp = $pdo->query('SELECT id,chart_no,name FROM patients ORDER BY id DESC LIMIT 200')->fetchAll();
 $docs = $pdo->query('SELECT * FROM doctors ORDER BY id')->fetchAll();
@@ -62,7 +72,7 @@ $regs = $pdo->query("SELECT r.id, r.reg_no, p.name FROM registrations r JOIN pat
 <?php if ($s['status']==='術前準備'): ?><a class="btn btn-sm btn-warning" href="surgery.php?start=<?= $s['id'] ?>&date=<?= h($date) ?>">開刀</a><?php endif; ?>
 <?php if ($s['status']==='手術中'): ?><a class="btn btn-sm btn-info" href="surgery.php?recover=<?= $s['id'] ?>&date=<?= h($date) ?>">恢復</a><?php endif; ?>
 <?php if ($s['status']==='恢復中'): ?><a class="btn btn-sm btn-success" href="surgery.php?done=<?= $s['id'] ?>&date=<?= h($date) ?>">完成</a><?php endif; ?>
-<?php if (!in_array($s['status'], ['完成','取消'], true)): ?><a class="btn btn-sm btn-outline-danger" href="surgery.php?cancel=<?= $s['id'] ?>&date=<?= h($date) ?>" onclick="return confirm('取消手術？')">取消</a><?php endif; ?></td></tr><?php endforeach; ?></table>
+<?php if (!in_array($s['status'], ['完成','取消'], true)): if ((int)($s['billed'] ?? 0) > 0): ?><a class="btn btn-sm btn-outline-secondary" href="refund.php" title="已併入帳單，請走退費流程">退費</a><?php else: ?><a class="btn btn-sm btn-outline-danger" href="surgery.php?cancel=<?= $s['id'] ?>&date=<?= h($date) ?>" onclick="return confirm('取消手術？')">取消</a><?php endif; endif; ?></td></tr><?php endforeach; ?></table>
 <?php if (!$rows): ?><div class="card-body text-muted">當日無排程。</div><?php endif; ?></div>
 <div class="card shadow-sm mt-3"><div class="card-header fw-bold">未來排程（20筆）</div>
 <table class="table table-sm mb-0"><tr><th>日期</th><th>時間</th><th>術式</th><th>病人</th><th>狀態</th></tr>

@@ -53,6 +53,7 @@
 - 出院結算：ipd.php 住院單顯示 病床費＋醫囑費＋手術費（該住院掛之非取消 surgeries.fee 合計）＝出院總計；併入明細表
 - 門診手術併批價：surgeries 加 reg_id（FK registrations）；surgery.php 可掛掛號單。批價 billing.php 及收據 receipt.php 計入 該 reg 非取消且 admission_id IS NULL 之手術費（住院掛單者併出院結算，避免重複計）；報表 reports.php 加「手術營收」日別統計（未取消）＋完成累計
 - 手術費退費流：共用 void_outpatient_surgeries($pdo,$reg_id)（includes/functions.php）作廢該掛號非取消門診手術並回台數；三處退款路徑皆同步呼叫：billing.php?refund=、refund.php act=refund（交易內）、refund.php?cancel= 未收費退掛；flash 顯示「同步作廢門診手術 N 台」
+- 已收費手術保護：surgery.php 取消鈕僅對「無已收帳單」者顯示；?cancel= 處理端亦擋下 門診手術且該 reg 有 paid=1/voided=0 帳單 者（flash 導引去退費）；刀表加 billed 子查詢旗標，已收費者顯示「退費」鈕（→refund.php）
 - 單號規則：共用 gen_no($pdo, prefix, table, col)＝前綴＋當日 ymd＋3 碼流水。
 - 狀態流（MVP 主線）：掛號 → 待批價 → 待領藥 → 結案；看診中/退掛欄位已定義但流程尚未使用。
 
