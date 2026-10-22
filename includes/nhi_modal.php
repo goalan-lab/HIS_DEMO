@@ -10,7 +10,17 @@
 <div class="row g-2 mb-1">
 <div class="col"><button type="button" class="btn btn-outline-primary btn-sm w-100" id="nhiConnectBtn">🖥 連線讀卡機</button></div>
 <div class="col"><button type="button" class="btn btn-primary btn-sm w-100" id="nhiScanBtn">▶ 開始讀取</button></div>
+<div class="col-12"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="document.getElementById('nhiWinAlert').classList.toggle('d-none')">🪟 連線被 Windows 智慧卡佔用？點這裡看停用步驟</button></div>
 </div>
+<div class="alert alert-warning small d-none mb-2" id="nhiWinAlert">
+   ⚠️ <b>讀卡機被 Windows「智慧卡」系統佔用</b>（CCID 讀卡機常見）。請先停用再重試：<br>
+   1. 用「系統管理員」PowerShell 執行暫時停用：<br>
+   &nbsp;&nbsp;<code>powershell -File "d:\xampp\htdocs\HIS_DEMO\_tmp\FreeSmartCardReader.ps1"</code>（重開機後需重做）<br>
+   &nbsp;&nbsp;或永久停用（此讀卡機）：<code>powershell -File "d:\xampp\htdocs\HIS_DEMO\_tmp\DisableWindowsSmartCard.ps1"</code><br>
+   2. <b>拔掉讀卡機 USB，再插回去</b><br>
+   3. 回到這裡重新按「連線讀卡機」。<br>
+   <span class="text-muted">還原：裝置管理員「啟用裝置」，或 <code>Start-Service SCardSvr</code>。</span>
+ </div>
 <div id="nhiStatus" class="form-text small text-muted"></div>
 <div id="nhiRaw" class="small text-muted mt-1"></div>
 <div class="row g-2 mt-2">

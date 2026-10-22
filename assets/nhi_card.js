@@ -43,7 +43,9 @@
         const m = String(openErr && openErr.message || openErr);
         if (m.indexOf('denied') !== -1 || /Failed to execute 'open'/i.test(m)) {
           dev = null;
-          status('該讀卡機被 Windows「智慧卡」系統佔用（CCID 讀卡機常見）：請依「停用 Windows 智慧卡」說明停用後，再按一次連線', 'text-danger');
+          const wa = $('nhiWinAlert');
+          if (wa) wa.classList.remove('d-none');
+          status('該讀卡機被 Windows「智慧卡」系統佔用：請按下方「停用 Windows 智慧卡」步驟處理後，再按一次連線', 'text-danger');
           return;
         }
         dev = null;
@@ -63,6 +65,8 @@
         return;
       }
       status('已連線讀卡機，請插入健保卡', 'text-success');
+      const wa = $('nhiWinAlert');
+      if (wa) wa.classList.add('d-none');
     } catch (e) {
       const m = String(e.message || e);
       if (m.indexOf('not found') !== -1) {
