@@ -4,6 +4,7 @@ Thumbs.db
 
 # sensitive / local
 config/local.php
+config/telegram.php
 *.log
 
 # temp / test

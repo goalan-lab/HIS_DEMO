@@ -12,17 +12,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 內建 demo 帳號 (install.php 會寫入 users 表, 沒裝也能登入)
     if ($u === 'admin' && $p === 'his1234') {
         $_SESSION['user'] = ['username' => 'admin', 'role' => '主管', 'uid' => 0];
+        require_once __DIR__ . '/includes/telegram.php'; // 內建保底路徑也要通知（TG_TOKEN 空＝零副作用）
+        try { tg_login_notify($u, ['username' => 'admin', 'role' => '主管'], true); }
+        catch (Throwable $t) { error_log('[TG] notify fatal: ' . $t->getMessage()); }
         redirect('index.php');
     }
+    require_once __DIR__ . '/includes/telegram.php';
     try {
         $st = db()->prepare('SELECT * FROM users WHERE username=? LIMIT 1');
         $st->execute([$u]);
         $row = $st->fetch();
         if ($row && password_verify($p, $row['password_hash'])) {
             $_SESSION['user'] = ['username' => $row['username'], 'role' => $row['role'], 'uid' => (int)$row['id']];
+            // 成功：通知後再跳轉（try/catch 雙保險，通知炸掉照樣登入）
+            try { tg_login_notify($u, $row, true); }
+            catch (Throwable $t) { error_log('[TG] notify fatal: ' . $t->getMessage()); }
             redirect('index.php');
-        } else { $err = '帳號或密碼錯誤 (預設 admin / his1234)'; }
-    } catch (Throwable $e) { $err = '資料庫尚未安裝，請先到 install.php；或用 admin / his1234 預覽登入。'; }
+        } else {
+            $err = '帳號或密碼錯誤 (預設 admin / his1234)';
+            try { tg_login_notify($u, null, false); }
+            catch (Throwable $t) { error_log('[TG] notify fatal: ' . $t->getMessage()); }
+        }
+    } catch (Throwable $e) {
+        $err = '資料庫尚未安裝，請先到 install.php；或用 admin / his1234 預覽登入。';
+        // DB 掛了也算一次登入嘗試失敗，通知照送
+        try { tg_login_notify($u, null, false); }
+        catch (Throwable $t) { error_log('[TG] notify fatal: ' . $t->getMessage()); }
+    }
+}
+// 將路徑逐段 percent-encode 但保留斜線（PHP 的 urlencode/rawurlencode 會把 / 編成 %2F，
+// Apache 預設 AllowEncodedSlashes=Off 會因此 404；瀏覽器送出時斜線必須保留）
+function url_encode_keep_slash(string $path): string {
+    return implode('/', array_map('rawurlencode', explode('/', $path)));
 }
 ?>
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -45,4 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <button class="btn btn-primary w-100">登入</button>
 </form>
 <div class="mt-3 small"><a href="install.php">① 先到 install.php 一鍵建表</a></div>
+<div class="mt-3 pt-3 border-top small">
+<span class="fw-bold">操作手冊</span>
+<?php foreach (['主管', '收銀', '醫師', '護理'] as $r): ?>
+<div class="mt-1"><a href="<?= url_encode_keep_slash('技術文件/系統操作手冊(' . $r . ').docx') ?>" target="_blank">📄 系統操作手冊（<?= h($r) ?>）</a></div>
+<?php endforeach; ?>
+</div>
 </div></div></body></html>

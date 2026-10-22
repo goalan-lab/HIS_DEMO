@@ -14,6 +14,16 @@ define('DB_CHARSET', 'utf8mb4');
 define('DEFAULT_REG_FEE', 150);
 define('DEFAULT_EXAM_FEE', 350);
 
+// ===== Telegram 登入通知（見 telgram.md）=====
+// TG_TOKEN / TG_CHAT_ID 留空＝停用通知，零副作用；真實 token 放 config/telegram.php（gitignore 不提交）
+// 注意：@require 無法 suppress 缺檔 fatal，故用 is_file 保護
+if (is_file(__DIR__ . '/telegram.php')) require_once __DIR__ . '/telegram.php';
+if (!defined('TG_TOKEN'))    define('TG_TOKEN', '');
+if (!defined('TG_CHAT_ID'))  define('TG_CHAT_ID', '');
+
+// 預設時區（通知時間等用）
+date_default_timezone_set('Asia/Taipei');
+
 // 診別
 function slot_options() {
     return ['早診' => '早診 08:30-12:00', '午診' => '午診 14:00-17:30', '晚診' => '晚診 18:00-21:00'];
