@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS patients (
   chart_no VARCHAR(20) NOT NULL UNIQUE COMMENT '病歷號',
   name VARCHAR(50) NOT NULL,
   id_no VARCHAR(20) NULL COMMENT '身分證',
+  nhi_no VARCHAR(20) NULL UNIQUE COMMENT '健保卡號',
   birth_date DATE NULL,
   gender ENUM('男','女','其他') DEFAULT '男',
   phone VARCHAR(30) NULL,
@@ -289,3 +290,8 @@ INSERT IGNORE INTO drugs (code, name, spec, unit, price, stock) VALUES
 ('D003', '胃藥', '20mg', '顆', 10, 500),
 ('D004', '抗生素', '250mg', '顆', 15, 300),
 ('D005', '眼藥水', '10ml', '瓶', 60, 150);
+
+-- 健保卡 demo 樣本（手動輸入卡號「A12345678」「N01234567」可查到既有病歷）
+INSERT IGNORE INTO patients (id, chart_no, name, id_no, nhi_no, birth_date, gender, phone) VALUES
+(1, 'P0000001', '陳志強', 'A123456789', 'A12345678', '1985-03-12', '男', '0912345678'),
+(3, 'P0000003', '林麗華', 'N012345678', 'N01234567', '1992-11-05', '女', '0987654321');

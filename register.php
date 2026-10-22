@@ -67,8 +67,8 @@ $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patient
 <div class="row g-3">
 <div class="col-md-5"><?php if (can('register.reg')): ?><div class="card shadow-sm"><div class="card-header fw-bold">掛號</div><div class="card-body">
 <form method="post"><input type="hidden" name="act" value="reg">
-<div class="mb-2"><label class="form-label">病人</label>
-<select name="patient_id" class="form-select" required>
+<div class="mb-2"><label class="form-label">病人 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#nhiModal">📇 掃卡掛號</button></label>
+<select name="patient_id" id="regPatientSelect" class="form-select" required>
 <option value="">-- 選擇 --</option>
 <?php foreach ($allp as $p): ?>
 <option value="<?= $p['id'] ?>" <?= $sel_patient && $sel_patient['id']==$p['id']?'selected':'' ?>><?= h($p['chart_no'].' '.$p['name']) ?></option>
@@ -100,4 +100,5 @@ $today = $pdo->query("SELECT r.*, p.name pname FROM registrations r JOIN patient
 <?php foreach ($today as $t): ?><tr><td><?= h($t['reg_no']) ?></td><td><?= h($t['pname']) ?></td><td><?= h($t['slot']) ?></td><td><?= h($t['status']) ?></td>
 <td><a class="btn btn-sm btn-outline-primary" href="register.php?reg_id=<?= $t['id'] ?>">開方</a></td></tr><?php endforeach; ?></table></div>
 </div></div>
+<?php $nhi_mode = 'register'; require_once __DIR__ . '/includes/nhi_modal.php'; ?>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -22,6 +22,14 @@ if (isset($_GET['run'])) {
         foreach ([['cashier','收銀'],['nurse','護理'],['doctor','醫師']] as [$u, $r]) {
             $pdo->exec("INSERT INTO users (username,password_hash,role) VALUES ('$u','$hash','$r') ON DUPLICATE KEY UPDATE role='$r'");
         }
+        // 舊庫相容：健保卡號欄位（新裝由 schema.sql 建立，舊 DB 補上）
+        try {
+            $pdo->exec("ALTER TABLE patients ADD COLUMN nhi_no VARCHAR(20) NULL UNIQUE COMMENT '健保卡號' AFTER id_no");
+        } catch (PDOException $e) { /* 欄位已存在 */ }
+        // 健保卡 demo 樣本（手動輸入卡號 A12345678 / N01234567 可查到既有病歷）
+        $pdo->exec("INSERT IGNORE INTO patients (id, chart_no, name, id_no, nhi_no, birth_date, gender, phone) VALUES
+            (1, 'P0000001', '陳志強', 'A123456789', 'A12345678', '1985-03-12', '男', '0912345678'),
+            (3, 'P0000003', '林麗華', 'N012345678', 'N01234567', '1992-11-05', '女', '0987654321')");
         $msg = '安裝成功！預設帳號 admin / his1234';
         $ok = true;
     } catch (Throwable $e) { $msg = '安裝失敗：' . $e->getMessage(); }
