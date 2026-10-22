@@ -31,7 +31,7 @@
 
 ## 3. 目錄結構（共 18 檔）
 - agent.md：本檔 AI 上下文；README.md：使用者啟動說明；.gitignore：PHP/XAMPP 忽略規則。
-- config/app.php：APP_NAME/DB 連線常數/DEFAULT_REG_FEE=150/DEFAULT_EXAM_FEE=350/slot_options()。
+- config/app.php：環境開關（HIS_ENV=local/online，切本機/線上只改這一行）→ 分發 app_local.php／app_online.php；共享設定在 app_common.php（APP_NAME/DEFAULT_REG_FEE=150/DEFAULT_EXAM_FEE=350/slot_options()/Telegram 常數）；DB 連線：本機 root/空密碼，線上 app_online.php（gitignore 不提交，上線時另行放檔）。
 - config/db.php：db():PDO 單例；Unknown database 時導向 install.php。
 - includes/functions.php：h()/redirect()/today()/gen_no()/flash_set()/flash_get()/require_login()。
 - includes/header.php：版頭＋登入檢查＋Bootstrap＋導覽列（總覽/病歷/掛號/批價/藥局/報表）。
