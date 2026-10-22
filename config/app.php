@@ -4,4 +4,5 @@
 // 'online' = InfinityFree（sql210.infinityfree.com / if0_43222797_his_demo）
 // 共享設定（站名/費用/診別/Telegram 常數）在 app_common.php；連線資訊在各環境檔。
 if (!defined('HIS_ENV')) define('HIS_ENV', 'local');
+//if (!defined('HIS_ENV')) define('HIS_ENV', 'online');
 require_once __DIR__ . '/app_' . HIS_ENV . '.php';
