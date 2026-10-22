@@ -37,15 +37,39 @@
     try {
       // 不設 filter：各廠讀卡機 vendor 不同，讓使用者自己選（選「智慧卡讀取器」那台）
       dev = await navigator.usb.requestDevice({ filters: [] });
-      await dev.open();
-      const conf = dev.configurations[0];
-      await dev.selectConfiguration(conf.configurationValue);
-      const itf = conf.interfaces.find(i => i.interfaceClass === 0x0B) || conf.interfaces[0];
-      await dev.claimInterface(itf.interfaceNumber);
-      iface = itf.interfaceNumber;
+      try {
+        await dev.open();
+      } catch (openErr) {
+        const m = String(openErr && openErr.message || openErr);
+        if (m.indexOf('denied') !== -1 || /Failed to execute 'open'/i.test(m)) {
+          dev = null;
+          status('該讀卡機被 Windows「智慧卡」系統佔用（CCID 讀卡機常見）：請依「停用 Windows 智慧卡」說明停用後，再按一次連線', 'text-danger');
+          return;
+        }
+        dev = null;
+        status('連線失敗：' + m, 'text-danger');
+        return;
+      }
+      try {
+        const conf = dev.configurations[0];
+        await dev.selectConfiguration(conf.configurationValue);
+        const itf = conf.interfaces.find(i => i.interfaceClass === 0x0B) || conf.interfaces[0];
+        await dev.claimInterface(itf.interfaceNumber);
+        iface = itf.interfaceNumber;
+      } catch (claimErr) {
+        try { await dev.close(); } catch (_) { }
+        dev = null;
+        status('介面占用失敗：' + claimErr.message + '（讀卡機可能被其他程式使用）', 'text-danger');
+        return;
+      }
       status('已連線讀卡機，請插入健保卡', 'text-success');
     } catch (e) {
-      status('連線失敗：' + e.message, 'text-danger');
+      const m = String(e.message || e);
+      if (m.indexOf('not found') !== -1) {
+        status('連線失敗：讀卡機已斷開、或瀏覽器權限已被撤銷（瀏覽器右上角網站設定清除該裝置後，重新選「連線讀卡機」再選一次）', 'text-danger');
+      } else {
+        status('連線失敗：' + m, 'text-danger');
+      }
     }
   }
 
